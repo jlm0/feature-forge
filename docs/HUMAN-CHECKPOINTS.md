@@ -8,17 +8,19 @@ Feature-Forge operates on a principle of **guided autonomy**, not full automatio
 - Humans intervene at pivotal moments with uncertainty
 - Quality emerges from human-AI collaboration, not replacement
 
-*"Think of it as a relay race where you're passing the baton."*
+_"Think of it as a relay race where you're passing the baton."_
 
 ## Why Human Checkpoints Matter
 
 Without checkpoints:
+
 - Agents may declare tasks complete without proper verification
 - Design decisions are made without stakeholder input
 - Security trade-offs are chosen without business context
 - Errors compound through subsequent phases
 
 With checkpoints:
+
 - Course correction before significant investment
 - Business context informs technical decisions
 - Security requirements aligned with risk appetite
@@ -26,15 +28,15 @@ With checkpoints:
 
 ## Checkpoint Locations
 
-| Checkpoint | After Phase | What's Reviewed | Typical Decision |
-|------------|-------------|-----------------|------------------|
-| **Triage** | Triage | Security priorities for v1 | Approve / Adjust priorities |
-| **Clarification** | Clarification | Resolved ambiguities | Confirm understanding |
-| **Architecture** | Architecture | Design approach | Approve / Request changes |
-| **Hardening** | Hardening | Security review of design | Approve / Add requirements |
-| **Implementation Start** | Pre-Implementation | Ready to write code | Approve start / Hold |
-| **Review** | Review | Quality & security findings | Ship / Fix now / Defer |
-| **Completion** | Summary | Final deliverable | Accept / Revise |
+| Checkpoint               | After Phase        | What's Reviewed             | Typical Decision            |
+| ------------------------ | ------------------ | --------------------------- | --------------------------- |
+| **Triage**               | Triage             | Security priorities for v1  | Approve / Adjust priorities |
+| **Clarification**        | Clarification      | Resolved ambiguities        | Confirm understanding       |
+| **Architecture**         | Architecture       | Design approach             | Approve / Request changes   |
+| **Hardening**            | Hardening          | Security review of design   | Approve / Add requirements  |
+| **Implementation Start** | Pre-Implementation | Ready to write code         | Approve start / Hold        |
+| **Review**               | Review             | Quality & security findings | Ship / Fix now / Defer      |
+| **Completion**           | Summary            | Final deliverable           | Accept / Revise             |
 
 ## Checkpoint Flow
 
@@ -64,6 +66,7 @@ Wait for human response
 ## State Tracking for Checkpoints
 
 **state.json approvals section:**
+
 ```json
 {
   "phase": "implementation",
@@ -96,11 +99,13 @@ Wait for human response
 **Purpose:** Ensure security priorities align with business needs and risk appetite.
 
 **What's presented:**
+
 - v1 security requirements (must have)
 - Deferred items (can wait)
 - Accepted risks (documented trade-offs)
 
 **Human decides:**
+
 - Are priorities correct?
 - Should anything be promoted/demoted?
 - Are accepted risks acceptable?
@@ -112,12 +117,14 @@ Wait for human response
 **Purpose:** Ensure design approach is sound before implementation investment.
 
 **What's presented:**
+
 - Chosen architecture with rationale
 - Alternative approaches considered
 - Trade-offs (complexity, performance, security)
 - Files that will be created/modified
 
 **Human decides:**
+
 - Is this the right approach?
 - Are trade-offs acceptable?
 - Any concerns about the design?
@@ -129,11 +136,13 @@ Wait for human response
 **Purpose:** Ensure security concerns are addressed in design.
 
 **What's presented:**
+
 - Footguns identified in design
 - Security recommendations
 - Required mitigations for v1
 
 **Human decides:**
+
 - Are all critical issues addressed?
 - Any additional security requirements?
 - Acceptable to proceed with implementation?
@@ -145,12 +154,14 @@ Wait for human response
 **Purpose:** Decide how to handle findings from quality/security review.
 
 **What's presented:**
+
 - Critical issues (bugs, security vulnerabilities)
 - Important suggestions (code quality, patterns)
 - Test results and coverage
 - Variant analysis results (if applicable)
 
 **Human decides:**
+
 - Fix now (blocks release)
 - Fix later (tracked for next sprint)
 - Won't fix (documented decision)
@@ -165,21 +176,20 @@ Beyond scheduled checkpoints, humans can intervene when:
 ### Agent Requests Help
 
 Agents should ask for help when:
+
 - Unclear requirements discovered mid-phase
 - Conflicting constraints identified
 - Decision exceeds delegated authority
 - Unexpected blockers encountered
 
 **How to signal:**
+
 ```json
 {
   "intervention_requested": true,
   "reason": "Discovered conflicting requirements",
   "context": "Auth design requires both stateless JWT and server-side session for compliance",
-  "options": [
-    "Option A: Hybrid approach with...",
-    "Option B: Prioritize compliance with..."
-  ],
+  "options": ["Option A: Hybrid approach with...", "Option B: Prioritize compliance with..."],
   "recommendation": "Option B because..."
 }
 ```
@@ -187,6 +197,7 @@ Agents should ask for help when:
 ### Human Initiates
 
 Humans can intervene by:
+
 - Responding during a checkpoint pause
 - Sending a message during execution
 - Using `/cancel-ralph` to stop loops
@@ -230,11 +241,13 @@ For Ralph loops (Implementation, Remediation), checkpoints occur:
 4. **On iteration limit** — If max-iterations reached, human decides
 
 **Max iterations as safety:**
+
 ```bash
 /ralph-loop "..." --max-iterations 30
 ```
 
 If limit reached without completion:
+
 - Loop stops
 - Human reviews progress
 - Decides: continue with more iterations / change approach / pause
@@ -244,12 +257,14 @@ If limit reached without completion:
 Each checkpoint can have quality gates that must pass:
 
 **Architecture checkpoint gates:**
+
 - [ ] Security requirements addressed
 - [ ] Performance requirements considered
 - [ ] Backward compatibility maintained
 - [ ] Testing strategy defined
 
 **Implementation checkpoint gates:**
+
 - [ ] All tests passing
 - [ ] Lint clean
 - [ ] Typecheck clean
@@ -316,4 +331,5 @@ Human checkpoints transform Feature-Forge from an autonomous system into a colla
 - **Feedback loops** incorporate human judgment into AI execution
 - **Quality gates** enforce standards before proceeding
 
-The goal is not to slow down development but to ensure that AI-assisted development produces outcomes humans actually want.
+The goal is not to slow down development but to ensure that AI-assisted development produces outcomes humans actually
+want.

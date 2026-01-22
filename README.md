@@ -2,18 +2,19 @@
 
 **Secure, Human-Stewarded, Context-Persistent Feature Development**
 
-Feature-Forge is a Claude Code plugin that combines deep context building, security analysis, iterative implementation, and human oversight into a cohesive workflow for non-trivial feature development.
+Feature-Forge is a Claude Code plugin that combines deep context building, security analysis, iterative implementation,
+and human oversight into a cohesive workflow for non-trivial feature development.
 
 ## Origin
 
 Feature-Forge synthesizes learnings from multiple sources:
 
-| Source | Contribution |
-|--------|--------------|
-| **feature-dev** (Anthropic) | Phased workflow, specialized agents, clarification loops |
-| **Trail of Bits skills** | Security-first context building, hardening review, verification |
-| **Ralph Wiggum** (Geoffrey Huntley) | Iterative loops, file-based memory persistence |
-| **Anthropic research** | Context management, two-agent harness, progress tracking |
+| Source                              | Contribution                                                    |
+| ----------------------------------- | --------------------------------------------------------------- |
+| **feature-dev** (Anthropic)         | Phased workflow, specialized agents, clarification loops        |
+| **Trail of Bits skills**            | Security-first context building, hardening review, verification |
+| **Ralph Wiggum** (Geoffrey Huntley) | Iterative loops, file-based memory persistence                  |
+| **Anthropic research**              | Context management, two-agent harness, progress tracking        |
 
 ## Core Principles
 
@@ -54,20 +55,22 @@ SUMMARY
 
 ## Documentation
 
-| Document | Purpose |
-|----------|---------|
-| [Architecture](docs/ARCHITECTURE.md) | Workflow phases, flow, structure |
-| [Context Persistence](docs/CONTEXT-PERSISTENCE.md) | Memory patterns, JSON vs MD, Ralph loops |
-| [Plugin Structure](docs/PLUGIN-STRUCTURE.md) | Skills, agents, commands, hooks |
-| [Security Integration](docs/SECURITY-INTEGRATION.md) | Trail of Bits skill composition |
-| [Human Checkpoints](docs/HUMAN-CHECKPOINTS.md) | Intervention points and feedback |
+| Document                                             | Purpose                                  |
+| ---------------------------------------------------- | ---------------------------------------- |
+| [Architecture](docs/ARCHITECTURE.md)                 | Workflow phases, flow, structure         |
+| [Context Persistence](docs/CONTEXT-PERSISTENCE.md)   | Memory patterns, JSON vs MD, Ralph loops |
+| [Plugin Structure](docs/PLUGIN-STRUCTURE.md)         | Skills, agents, commands, hooks          |
+| [Security Integration](docs/SECURITY-INTEGRATION.md) | Trail of Bits skill composition          |
+| [Human Checkpoints](docs/HUMAN-CHECKPOINTS.md)       | Intervention points and feedback         |
 
 ## Status
 
-**Conceptual Design Phase** — This repository currently contains architectural documentation and design decisions. Implementation will follow once the design is validated.
+**Conceptual Design Phase** — This repository currently contains architectural documentation and design decisions.
+Implementation will follow once the design is validated.
 
 ## Name Origin
 
-*"We don't just write code—we forge it through fire: understood, hardened, reviewed, and refined."*
+_"We don't just write code—we forge it through fire: understood, hardened, reviewed, and refined."_
 
-Feature-Forge captures both the feature development aspect and the disciplined, security-conscious process of shaping code through multiple phases of analysis and verification.
+Feature-Forge captures both the feature development aspect and the disciplined, security-conscious process of shaping
+code through multiple phases of analysis and verification.

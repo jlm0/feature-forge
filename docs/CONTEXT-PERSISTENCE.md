@@ -14,17 +14,18 @@ Claude Code sessions are fundamentally stateless. For complex tasks spanning hou
 
 **Claude's memory is the file system, not the conversation.**
 
-The conversation context is ephemeral and token-limited. Files persist indefinitely and can be read by any agent or session.
+The conversation context is ephemeral and token-limited. Files persist indefinitely and can be read by any agent or
+session.
 
 ## File-Based Memory Architecture
 
 ### What Goes Where
 
-| Format | Use When | Why |
-|--------|----------|-----|
-| **JSON** | State tracking, checklists, machine-readable data | Less model drift, parseable by scripts |
-| **Markdown** | Explanatory prose, reasoning, human-readable context | Natural language, nuance, connections |
-| **YAML Frontmatter + MD** | Files needing both state AND context | Structured metadata + prose body |
+| Format                    | Use When                                             | Why                                    |
+| ------------------------- | ---------------------------------------------------- | -------------------------------------- |
+| **JSON**                  | State tracking, checklists, machine-readable data    | Less model drift, parseable by scripts |
+| **Markdown**              | Explanatory prose, reasoning, human-readable context | Natural language, nuance, connections  |
+| **YAML Frontmatter + MD** | Files needing both state AND context                 | Structured metadata + prose body       |
 
 ### Decision Framework
 
@@ -48,22 +49,25 @@ JSON   + Markdown body
 ### Examples
 
 **JSON for state (protected, queryable):**
+
 ```json
 {
   "phase": "implementation",
   "iteration": 3,
   "features": [
-    {"id": "auth-001", "status": "complete", "tests_pass": true},
-    {"id": "auth-002", "status": "in_progress", "tests_pass": false}
+    { "id": "auth-001", "status": "complete", "tests_pass": true },
+    { "id": "auth-002", "status": "in_progress", "tests_pass": false }
   ]
 }
 ```
 
 **Markdown for reasoning (nuanced, contextual):**
+
 ```markdown
 ## Why JWT with Refresh Token Rotation
 
 We chose JWT over session cookies because:
+
 1. The mobile app needs stateless auth
 2. Microservices can validate without hitting a session store
 3. Refresh rotation mitigates token theft risk
@@ -72,6 +76,7 @@ Trade-off: More complex token handling on client side.
 ```
 
 **YAML frontmatter for both:**
+
 ```markdown
 ---
 phase: architecture
@@ -83,6 +88,7 @@ approved_at: 2026-01-22T14:30:00Z
 # Architecture Decision
 
 ## Chosen Approach
+
 We're implementing a layered architecture...
 ```
 
@@ -133,6 +139,7 @@ started_at: "2026-01-22T10:00:00Z"
 ---
 
 Build a REST API for todos. Requirements:
+
 - CRUD operations
 - Input validation
 - Tests passing
@@ -145,11 +152,13 @@ Output <promise>DONE</promise> when complete.
 ### Anthropic's Two-Agent Harness
 
 **1. Initializer Agent** (first session only):
+
 - Creates comprehensive feature list (100-200+ items)
 - Sets up progress tracking files
 - Makes initial git commit
 
 **2. Coding Agent** (all subsequent sessions):
+
 1. Read git logs and progress files
 2. Read feature list, choose highest-priority incomplete item
 3. Work on ONE feature only
@@ -160,6 +169,7 @@ Output <promise>DONE</promise> when complete.
 ### Progress File Structure
 
 **progress.json (machine-readable):**
+
 ```json
 {
   "current_session": {
@@ -180,6 +190,7 @@ Output <promise>DONE</promise> when complete.
 ```
 
 **feature-list.json (implementation checklist):**
+
 ```json
 {
   "features": [
@@ -200,9 +211,11 @@ Output <promise>DONE</promise> when complete.
 
 ### Why JSON Over Markdown for Checklists
 
-Per Anthropic's research: *"JSON format is preferred over Markdown as models are less likely to inappropriately modify it."*
+Per Anthropic's research: _"JSON format is preferred over Markdown as models are less likely to inappropriately modify
+it."_
 
 JSON provides:
+
 - Structured data that scripts can parse
 - Less tendency for models to "helpfully" edit
 - Clear boolean states vs. ambiguous prose
@@ -211,23 +224,25 @@ JSON provides:
 
 Claude Code uses hierarchical memory files:
 
-| Level | Location | Purpose |
-|-------|----------|---------|
-| **Enterprise** | `/etc/claude-code/CLAUDE.md` | Organization standards |
-| **User** | `~/.claude/CLAUDE.md` | Personal preferences |
-| **Project** | `./CLAUDE.md` | Team-shared context |
-| **Local** | `./CLAUDE.local.md` | Private preferences (gitignored) |
-| **Workflow** | `.claude/feature-forge/` | Feature-Forge state |
+| Level          | Location                     | Purpose                          |
+| -------------- | ---------------------------- | -------------------------------- |
+| **Enterprise** | `/etc/claude-code/CLAUDE.md` | Organization standards           |
+| **User**       | `~/.claude/CLAUDE.md`        | Personal preferences             |
+| **Project**    | `./CLAUDE.md`                | Team-shared context              |
+| **Local**      | `./CLAUDE.local.md`          | Private preferences (gitignored) |
+| **Workflow**   | `.claude/feature-forge/`     | Feature-Forge state              |
 
 ### CLAUDE.md Best Practices
 
 **DO:**
+
 - Keep it concise (<60 lines ideal)
 - Include essential commands (build, test, lint)
 - Document project-specific gotchas
 - Use imports for modularity: `@docs/architecture.md`
 
 **DON'T:**
+
 - Auto-generate without review
 - Include everything (use progressive disclosure)
 - Duplicate what linters/formatters handle
@@ -242,6 +257,7 @@ When approaching token limits, stale content should be cleared:
 - Preserve essential state in files
 
 **Results from Anthropic's evaluation:**
+
 - Memory + context editing: **39% improvement** over baseline
 - 100-turn web search: **84% token reduction**
 
@@ -260,14 +276,8 @@ When transitioning between sessions or phases:
 {
   "session_end": "2026-01-22T18:00:00Z",
   "phase_completed": "implementation",
-  "what_was_done": [
-    "Implemented auth-001: JWT validation",
-    "Implemented auth-002: Refresh token rotation"
-  ],
-  "what_remains": [
-    "auth-003: Password reset flow",
-    "Review phase pending"
-  ],
+  "what_was_done": ["Implemented auth-001: JWT validation", "Implemented auth-002: Refresh token rotation"],
+  "what_remains": ["auth-003: Password reset flow", "Review phase pending"],
   "context_notes": [
     "Using 15-minute token expiry",
     "Refresh tokens stored in httpOnly cookies",

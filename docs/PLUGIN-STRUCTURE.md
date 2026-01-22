@@ -40,17 +40,18 @@ plugin-name/
 
 Plugins use three-level loading to manage context:
 
-| Level | Content | When Loaded | Token Cost |
-|-------|---------|-------------|------------|
-| **1. Metadata** | name + description | Always | ~100 words |
-| **2. Body** | SKILL.md or command | When triggered | <5,000 words |
-| **3. Resources** | scripts, references | As needed | Varies |
+| Level            | Content             | When Loaded    | Token Cost   |
+| ---------------- | ------------------- | -------------- | ------------ |
+| **1. Metadata**  | name + description  | Always         | ~100 words   |
+| **2. Body**      | SKILL.md or command | When triggered | <5,000 words |
+| **3. Resources** | scripts, references | As needed      | Varies       |
 
 **Key insight:** Scripts execute without loading into context — they're token-free.
 
 ## Plugin Metadata
 
 **plugin.json:**
+
 ```json
 {
   "name": "feature-forge",
@@ -158,6 +159,7 @@ description: "What it does AND when to use it"  # Required: ≤1024 chars
 ### Skill Best Practices
 
 **DO:**
+
 - Use imperative form ("Extract text", "Validate output")
 - Provide concrete examples over verbose explanations
 - Include code samples for technical skills
@@ -165,6 +167,7 @@ description: "What it does AND when to use it"  # Required: ≤1024 chars
 - Reference bundled files with clear guidance
 
 **DON'T:**
+
 - Include "When to Use" in body (already in description)
 - Duplicate info between SKILL.md and references
 - Exceed ~500 lines (use references for more)
@@ -175,11 +178,13 @@ description: "What it does AND when to use it"  # Required: ≤1024 chars
 Scripts execute without loading into context — they're token-free.
 
 **When to include:**
+
 - Code that would be repeatedly rewritten
 - Operations requiring deterministic reliability
 - State management, JSON manipulation
 
 **Example:**
+
 ```python
 #!/usr/bin/env python3
 """
@@ -197,11 +202,13 @@ Usage:
 Detailed documentation loaded into context when needed.
 
 **When to include:**
+
 - Detailed phase instructions
 - API specifications, schemas
 - Domain knowledge too large for SKILL.md
 
 **Best practices:**
+
 - Keep info in ONE place (SKILL.md OR references, not both)
 - Include table of contents for files >100 lines
 - Avoid deep nesting — link directly from SKILL.md
@@ -210,6 +217,7 @@ Detailed documentation loaded into context when needed.
 ## Agents (Subagents)
 
 Agents are specialized mini-agents with:
+
 - **Own system prompt** — Custom instructions
 - **Isolated context window** — Prevents context pollution
 - **Configurable tools** — Restricted or expanded access
@@ -247,22 +255,24 @@ When invoked, first read:
 
 ### Agent Tool Categories
 
-| Agent Type | Recommended Tools |
-|------------|-------------------|
-| Read-only (reviewers) | Read, Grep, Glob |
-| Research (analysts) | Read, Grep, Glob, WebFetch, WebSearch |
-| Writers (developers) | Read, Write, Edit, Bash, Glob, Grep |
-| Full access | Omit tools field (inherits parent) |
+| Agent Type            | Recommended Tools                     |
+| --------------------- | ------------------------------------- |
+| Read-only (reviewers) | Read, Grep, Glob                      |
+| Research (analysts)   | Read, Grep, Glob, WebFetch, WebSearch |
+| Writers (developers)  | Read, Write, Edit, Bash, Glob, Grep   |
+| Full access           | Omit tools field (inherits parent)    |
 
 ### Agent Best Practices
 
 **DO:**
+
 - Use "MUST BE USED for..." in description for auto-routing
 - Include context discovery steps (agents start fresh)
 - Define clear output format
 - Specify completion behavior
 
 **DON'T:**
+
 - Create too many agents (routing confusion)
 - Omit context gathering (agents don't inherit conversation)
 - Use vague descriptions (won't trigger correctly)
@@ -273,14 +283,14 @@ Hooks respond to events during Claude Code execution.
 
 ### Hook Events
 
-| Event | When Fired | Use Case |
-|-------|------------|----------|
-| **PreToolUse** | Before a tool executes | Validation, blocking |
-| **PostToolUse** | After a tool executes | Logging, side effects |
-| **Stop** | When session tries to exit | Ralph loops, cleanup |
-| **SubagentStop** | When subagent completes | Result processing |
-| **SessionStart** | Session begins | Initialization |
-| **Notification** | Notifications sent | Alerts, logging |
+| Event            | When Fired                 | Use Case              |
+| ---------------- | -------------------------- | --------------------- |
+| **PreToolUse**   | Before a tool executes     | Validation, blocking  |
+| **PostToolUse**  | After a tool executes      | Logging, side effects |
+| **Stop**         | When session tries to exit | Ralph loops, cleanup  |
+| **SubagentStop** | When subagent completes    | Result processing     |
+| **SessionStart** | Session begins             | Initialization        |
+| **Notification** | Notifications sent         | Alerts, logging       |
 
 ### hooks.json Structure
 
@@ -318,6 +328,7 @@ The Stop hook intercepts session exit to implement iterative loops:
 ```
 
 **Output format to block and continue:**
+
 ```json
 {
   "decision": "block",
@@ -372,23 +383,23 @@ feature-forge/
 
 ## Token Budget
 
-| Component | Tokens | Notes |
-|-----------|--------|-------|
-| Plugin metadata | ~500 | Always loaded |
-| Command body | ~1,000 | On invocation |
-| Active agent | ~800 | One at a time |
-| Phase reference | ~2,000 | On demand |
-| Context files | ~3,000 | Varies |
-| **Scripts** | **0** | Token-free |
+| Component           | Tokens     | Notes             |
+| ------------------- | ---------- | ----------------- |
+| Plugin metadata     | ~500       | Always loaded     |
+| Command body        | ~1,000     | On invocation     |
+| Active agent        | ~800       | One at a time     |
+| Phase reference     | ~2,000     | On demand         |
+| Context files       | ~3,000     | Varies            |
+| **Scripts**         | **0**      | Token-free        |
 | **Total per phase** | **~7,000** | Well under limits |
 
 ## Anti-Patterns
 
-| Anti-Pattern | Problem | Solution |
-|--------------|---------|----------|
-| Verbose explanations | Wastes context | Concise examples |
-| "When to Use" in body | Already triggered | Put in description |
-| Deeply nested references | Hard to navigate | One level deep |
-| Too many agents | Routing confusion | Consolidate by phase-group |
-| Vague descriptions | Won't auto-trigger | "MUST BE USED for..." |
-| No context discovery | Agents start fresh | Include file reading steps |
+| Anti-Pattern             | Problem            | Solution                   |
+| ------------------------ | ------------------ | -------------------------- |
+| Verbose explanations     | Wastes context     | Concise examples           |
+| "When to Use" in body    | Already triggered  | Put in description         |
+| Deeply nested references | Hard to navigate   | One level deep             |
+| Too many agents          | Routing confusion  | Consolidate by phase-group |
+| Vague descriptions       | Won't auto-trigger | "MUST BE USED for..."      |
+| No context discovery     | Agents start fresh | Include file reading steps |

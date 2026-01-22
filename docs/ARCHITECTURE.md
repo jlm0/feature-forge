@@ -12,25 +12,25 @@ Feature-Forge operates in three distinct modes:
 
 ### Context Building Phases
 
-| Phase | Purpose | Inputs | Outputs |
-|-------|---------|--------|---------|
-| **Discovery** | Understand what needs to be built | User request | `discovery.md` |
-| **Exploration** | Map codebase patterns and architecture | Discovery + codebase | `exploration.md` |
-| **Audit** | Build security context (trust boundaries, attack surfaces) | Exploration | `audit-context.md` |
-| **Threat** | Model threats using STRIDE methodology | Audit context | `threat-model.md` |
-| **Triage** | Prioritize security requirements for v1 | Threat model | `triage.json` |
-| **Clarification** | Resolve ambiguities with human input | All prior context | Updated discovery |
-| **Architecture** | Design implementation approach | All prior context | `architecture.md` |
-| **Hardening** | Review design for security footguns | Architecture + audit | `hardening-review.md` |
+| Phase             | Purpose                                                    | Inputs               | Outputs               |
+| ----------------- | ---------------------------------------------------------- | -------------------- | --------------------- |
+| **Discovery**     | Understand what needs to be built                          | User request         | `discovery.md`        |
+| **Exploration**   | Map codebase patterns and architecture                     | Discovery + codebase | `exploration.md`      |
+| **Audit**         | Build security context (trust boundaries, attack surfaces) | Exploration          | `audit-context.md`    |
+| **Threat**        | Model threats using STRIDE methodology                     | Audit context        | `threat-model.md`     |
+| **Triage**        | Prioritize security requirements for v1                    | Threat model         | `triage.json`         |
+| **Clarification** | Resolve ambiguities with human input                       | All prior context    | Updated discovery     |
+| **Architecture**  | Design implementation approach                             | All prior context    | `architecture.md`     |
+| **Hardening**     | Review design for security footguns                        | Architecture + audit | `hardening-review.md` |
 
 ### Execution Phases
 
-| Phase | Purpose | Mode | Inputs | Outputs |
-|-------|---------|------|--------|---------|
-| **Implementation** | Build the feature | Ralph loop | Architecture + feature-list.json | Code + commits |
-| **Review** | Quality and security review | Agent + human | Implementation | `findings.json` |
-| **Remediation** | Fix identified issues | Ralph loop | findings.json | Fixed code + commits |
-| **Summary** | Document and handoff | Linear | All outputs | `summary.md` |
+| Phase              | Purpose                     | Mode          | Inputs                           | Outputs              |
+| ------------------ | --------------------------- | ------------- | -------------------------------- | -------------------- |
+| **Implementation** | Build the feature           | Ralph loop    | Architecture + feature-list.json | Code + commits       |
+| **Review**         | Quality and security review | Agent + human | Implementation                   | `findings.json`      |
+| **Remediation**    | Fix identified issues       | Ralph loop    | findings.json                    | Fixed code + commits |
+| **Summary**        | Document and handoff        | Linear        | All outputs                      | `summary.md`         |
 
 ## Phase Flow Diagram
 
@@ -43,7 +43,7 @@ Feature-Forge operates in three distinct modes:
 │  ║                    CONTEXT BUILDING (Linear)                          ║  │
 │  ╠═══════════════════════════════════════════════════════════════════════╣  │
 │  ║                                                                       ║  │
-│  ║  DISCOVERY ──► EXPLORATION ──► AUDIT ──► THREAT ──► TRIAGE           ║  │
+│  ║  DISCOVERY ──► EXPLORATION ──► AUDIT ──► THREAT ──► TRIAGE            ║  │
 │  ║      │             │            │          │           │              ║  │
 │  ║      ▼             ▼            ▼          ▼           ▼              ║  │
 │  ║    .md           .md          .md        .md        .json             ║  │
@@ -124,27 +124,27 @@ Feature-Forge operates in three distinct modes:
 
 Different phases require different agent capabilities:
 
-| Agent | Phases | Tools | Purpose |
-|-------|--------|-------|---------|
-| **context-builder** | Discovery, Exploration, Clarification | Read, Grep, Glob, WebSearch | Understand requirements and codebase |
-| **security-analyst** | Audit, Threat, Triage | Read, Grep, Glob, Skill | Build security context |
-| **architect** | Architecture, Hardening | Read, Grep, Glob, Skill | Design and security review |
-| **implementer** | Implementation | Read, Write, Edit, Bash, Grep, Glob | Build features (Ralph-compatible) |
-| **reviewer** | Review | Read, Grep, Glob, Bash | Quality and security review |
-| **remediator** | Remediation | Read, Write, Edit, Bash, Grep, Glob | Fix issues (Ralph-compatible) |
+| Agent                | Phases                                | Tools                               | Purpose                              |
+| -------------------- | ------------------------------------- | ----------------------------------- | ------------------------------------ |
+| **context-builder**  | Discovery, Exploration, Clarification | Read, Grep, Glob, WebSearch         | Understand requirements and codebase |
+| **security-analyst** | Audit, Threat, Triage                 | Read, Grep, Glob, Skill             | Build security context               |
+| **architect**        | Architecture, Hardening               | Read, Grep, Glob, Skill             | Design and security review           |
+| **implementer**      | Implementation                        | Read, Write, Edit, Bash, Grep, Glob | Build features (Ralph-compatible)    |
+| **reviewer**         | Review                                | Read, Grep, Glob, Bash              | Quality and security review          |
+| **remediator**       | Remediation                           | Read, Write, Edit, Bash, Grep, Glob | Fix issues (Ralph-compatible)        |
 
 ## The Remediation Loop is a Mini Main Loop
 
 When issues are found in Review, the Remediation phase mirrors the main workflow:
 
-| Main Loop Phase | Remediation Equivalent |
-|-----------------|------------------------|
-| Discovery | Issue identified from Review |
-| Exploration | Variants (find related issues) |
-| Triage | Prioritize fixes |
-| Architecture | Design the fix |
-| Implementation | Apply the fix |
-| Review | Verify the fix |
+| Main Loop Phase | Remediation Equivalent         |
+| --------------- | ------------------------------ |
+| Discovery       | Issue identified from Review   |
+| Exploration     | Variants (find related issues) |
+| Triage          | Prioritize fixes               |
+| Architecture    | Design the fix                 |
+| Implementation  | Apply the fix                  |
+| Review          | Verify the fix                 |
 
 This recursive structure means the same patterns apply at both scales.
 

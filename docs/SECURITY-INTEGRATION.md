@@ -4,12 +4,12 @@
 
 Feature-Forge integrates Trail of Bits security skills into the development workflow:
 
-| Skill | Phase | Purpose |
-|-------|-------|---------|
-| **audit-context-building** | Audit | Deep context before vulnerability hunting |
-| **sharp-edges** | Hardening | Identify footgun designs and insecure defaults |
-| **variant-analysis** | Remediation | Find similar bugs after initial discovery |
-| **fix-review** | Verification | Verify fixes address findings |
+| Skill                      | Phase        | Purpose                                        |
+| -------------------------- | ------------ | ---------------------------------------------- |
+| **audit-context-building** | Audit        | Deep context before vulnerability hunting      |
+| **sharp-edges**            | Hardening    | Identify footgun designs and insecure defaults |
+| **variant-analysis**       | Remediation  | Find similar bugs after initial discovery      |
+| **fix-review**             | Verification | Verify fixes address findings                  |
 
 ## Skill Details
 
@@ -18,24 +18,28 @@ Feature-Forge integrates Trail of Bits security skills into the development work
 **Purpose:** Build deep architectural context through ultra-granular code analysis BEFORE vulnerability hunting.
 
 **When to use:**
+
 - Deep comprehension needed before bug discovery
 - Bottom-up understanding vs high-level guessing
 - Reducing hallucinations and context loss
 - Preparing for security audit or threat modeling
 
 **What it does:**
+
 - Line-by-line / block-by-block analysis
 - First Principles, 5 Whys, 5 Hows at micro scale
 - Maps insights → functions → modules → entire system
 - Identifies invariants, assumptions, flows, reasoning hazards
 
 **NOT for:**
+
 - Vulnerability findings (context only)
 - Fix recommendations (context only)
 - Exploit reasoning (context only)
 - Severity/impact rating (context only)
 
 **Output includes:**
+
 - Trust boundary mapping
 - Attack surface identification
 - Data flow analysis
@@ -47,12 +51,14 @@ Feature-Forge integrates Trail of Bits security skills into the development work
 **Purpose:** Identify error-prone APIs, dangerous configurations, and footgun designs that enable security mistakes.
 
 **When to use:**
+
 - Reviewing API designs
 - Evaluating configuration schemas
 - Assessing cryptographic library ergonomics
 - Checking "secure by default" and "pit of success" principles
 
 **What it identifies:**
+
 - APIs that make misuse easy
 - Dangerous default configurations
 - Missing guardrails
@@ -60,6 +66,7 @@ Feature-Forge integrates Trail of Bits security skills into the development work
 - Non-obvious failure modes
 
 **Key questions:**
+
 - Is this misuse-resistant?
 - Are defaults secure?
 - Does it follow pit-of-success principles?
@@ -70,38 +77,45 @@ Feature-Forge integrates Trail of Bits security skills into the development work
 **Purpose:** Find similar vulnerabilities across codebases using pattern-based analysis after finding an initial issue.
 
 **When to use:**
+
 - After discovering a vulnerability (hunt variants)
 - After fixing a bug (ensure no similar bugs)
 - When a CVE affects patterns in your code
 - During systematic security sweeps
 
 **What it does:**
+
 - Builds queries (CodeQL/Semgrep) from initial finding
 - Searches for similar patterns across codebase
 - Identifies related code paths
 - Maps vulnerability patterns
 
 **Triggers:**
+
 - "I found an XSS here, find similar issues"
 - "Search for other places where user input reaches SQL"
 - "After fixing this bug, check for variants"
 
 ### fix-review
 
-**Purpose:** Verify that git commits actually address security audit findings without introducing new bugs or regressions.
+**Purpose:** Verify that git commits actually address security audit findings without introducing new bugs or
+regressions.
 
 **When to use:**
+
 - After implementing fixes for audit findings
 - Before merging security-related PRs
 - During post-audit remediation review
 
 **What it does:**
+
 - Compares fix implementation against vulnerability report
 - Verifies the fix addresses root cause
 - Checks for introduced regressions
 - Validates completeness of remediation
 
 **Triggers:**
+
 - "Verify commits on branch fix/auth-bypass address TOB-003"
 - "Check if last 3 commits remediate SQL injection finding"
 - "Review the fix branch against the audit report"
@@ -122,6 +136,7 @@ Feature-Forge integrates Trail of Bits security skills into the development work
 ```
 
 **Output structure:**
+
 ```markdown
 ---
 phase: audit
@@ -134,15 +149,19 @@ critical_assumptions: 3
 # Security Context
 
 ## Trust Boundaries
+
 [Detailed analysis]
 
 ## Attack Surfaces
+
 [Entry points, exposed interfaces]
 
 ## Data Flows
+
 [Sensitive data movement]
 
 ## Invariants & Assumptions
+
 [What must remain true]
 ```
 
@@ -161,6 +180,7 @@ critical_assumptions: 3
 ```
 
 **Output structure:**
+
 ```markdown
 ---
 phase: hardening
@@ -173,12 +193,15 @@ severity_medium: 2
 # Hardening Review
 
 ## Critical Issues
+
 [Must fix before implementation]
 
 ## Recommendations
+
 [Should fix, prioritized]
 
 ## Accepted Risks
+
 [Documented decisions to accept]
 ```
 
@@ -211,16 +234,17 @@ severity_medium: 2
 
 The Threat phase uses STRIDE methodology:
 
-| Threat | Description | Questions |
-|--------|-------------|-----------|
-| **S**poofing | Impersonating something/someone | Can identity be faked? |
-| **T**ampering | Modifying data or code | Can data be changed? |
-| **R**epudiation | Denying actions taken | Can actions be traced? |
-| **I**nformation Disclosure | Exposing protected information | Can data leak? |
-| **D**enial of Service | Denying or degrading service | Can service be disrupted? |
-| **E**levation of Privilege | Gaining unauthorized access | Can permissions be exceeded? |
+| Threat                     | Description                     | Questions                    |
+| -------------------------- | ------------------------------- | ---------------------------- |
+| **S**poofing               | Impersonating something/someone | Can identity be faked?       |
+| **T**ampering              | Modifying data or code          | Can data be changed?         |
+| **R**epudiation            | Denying actions taken           | Can actions be traced?       |
+| **I**nformation Disclosure | Exposing protected information  | Can data leak?               |
+| **D**enial of Service      | Denying or degrading service    | Can service be disrupted?    |
+| **E**levation of Privilege | Gaining unauthorized access     | Can permissions be exceeded? |
 
 **Threat model output:**
+
 ```markdown
 ---
 phase: threat
@@ -232,23 +256,28 @@ mitigations_required: 8
 # Threat Model
 
 ## Assets
+
 [What we're protecting]
 
 ## Actors
+
 [Who interacts with the system]
 
 ## Trust Boundaries
+
 [Where trust changes]
 
 ## Threats by STRIDE
 
 ### Spoofing
+
 - Threat: [description]
   - Likelihood: [H/M/L]
   - Impact: [H/M/L]
   - Mitigation: [required action]
 
 ### Tampering
+
 ...
 ```
 
@@ -294,6 +323,7 @@ Feature-Forge skills **wrap** Trail of Bits skills, adding:
 3. **State updates** — Update state.json and progress.json
 
 **Example wrapper skill:**
+
 ```yaml
 ---
 name: audit-context

@@ -6,6 +6,9 @@ description:
 model: inherit
 color: blue
 tools: ["Read", "Grep", "Glob"]
+skills:
+  - ask-questions
+  - api-design
 ---
 
 You are an API design specialist with expertise in creating robust, well-documented API contracts that serve both

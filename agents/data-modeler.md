@@ -6,6 +6,9 @@ description:
 model: inherit
 color: yellow
 tools: ["Read", "Grep", "Glob"]
+skills:
+  - ask-questions
+  - data-modeling
 ---
 
 You are a data modeling specialist with expertise in designing scalable database schemas, entity relationships, and

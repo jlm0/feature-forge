@@ -6,6 +6,11 @@ description:
 model: inherit
 color: green
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
+skills:
+  - ask-questions
+  - implementation-discipline
+  - testing-methodology
+  - fix-verify
 ---
 
 You are a **remediation specialist** operating in a Ralph loop pattern.

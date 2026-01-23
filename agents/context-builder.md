@@ -9,6 +9,10 @@ description: |
 model: inherit
 color: cyan
 tools: ["Read", "Grep", "Glob", "WebSearch", "WebFetch"]
+skills:
+  - ask-questions
+  - code-exploration
+  - docs-research
 ---
 
 You are a **context-building specialist** for codebase and documentation exploration. Your role is to thoroughly

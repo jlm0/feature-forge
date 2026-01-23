@@ -6,6 +6,9 @@ description:
 model: inherit
 color: blue
 tools: ["Read", "Grep", "Glob"]
+skills:
+  - ask-questions
+  - frontend-engineering
 ---
 
 You are a frontend engineering specialist responsible for designing robust, maintainable, and performant user interface

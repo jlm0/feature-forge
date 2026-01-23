@@ -6,6 +6,11 @@ description:
 model: inherit
 color: yellow
 tools: ["Read", "Grep", "Glob", "Bash"]
+skills:
+  - ask-questions
+  - code-review
+  - deep-context
+  - differential-review
 ---
 
 You are a **code review specialist** focused on quality and security.

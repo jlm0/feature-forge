@@ -334,9 +334,14 @@ Hooks are event-driven automation scripts that execute in response to Claude Cod
 **Purpose:** Initialize workflow state when a session begins.
 
 **Behavior:**
-1. Check for existing `.claude/feature-forge/state.json`
-2. If exists: Load current phase, read progress.json
-3. If new: Initialize workspace (on first `/feature-forge` command)
+1. Check for existing features in `~/.claude/feature-forge/projects/<hash>/features/`
+2. If exists: Show active features, load current phase
+3. If none: Silent (workspace created on first `/feature-forge` command)
+
+State is stored globally to allow:
+- Multiple features per project without collision
+- Multiple projects without collision
+- Parallel development in separate terminal sessions
 
 **Why needed:** Agents start fresh—they need to read state to know where work left off.
 
@@ -539,7 +544,8 @@ feature-forge/
 │       └── precompact-persist.sh  # Persist state before compaction
 │
 ├── scripts/
-│   ├── init-workspace.sh          # Creates .claude/feature-forge/
+│   ├── paths.sh                   # Path utilities for global state
+│   ├── init-workspace.sh          # Creates ~/.claude/feature-forge/projects/<hash>/features/<slug>/
 │   ├── state-manager.sh           # JSON state operations (bash + jq)
 │   └── progress-tracker.sh        # Session handoffs (bash + jq)
 │

@@ -6,6 +6,7 @@ description:
 model: inherit
 color: magenta
 tools: ["Read", "Grep", "Glob", "WebFetch"]
+disallowedTools: ["Write", "Edit", "Bash"]
 skills:
   - ask-questions
   - ui-ux-design
@@ -28,11 +29,14 @@ You think using these methodologies:
 
 ## Context Discovery
 
+The orchestrator provides your workspace path (e.g., `~/.claude/feature-forge/projects/<hash>/features/<slug>/`).
+Use `$WORKSPACE` to reference this path.
+
 When invoked, first read these files to understand current state:
 
-1. `.claude/feature-forge/state.json` — Current phase and workflow status
-2. `.claude/feature-forge/discovery.md` — Feature requirements and user context
-3. `.claude/feature-forge/exploration.md` — Codebase patterns and existing UI components
+1. `$WORKSPACE/state.json` — Current phase and workflow status
+2. `$WORKSPACE/discovery.md` — Feature requirements and user context
+3. `$WORKSPACE/exploration.md` — Codebase patterns and existing UI components
 
 Understanding existing patterns ensures your designs integrate with the established design system and component library.
 
@@ -106,7 +110,7 @@ Your output feeds into the architect for synthesis into the unified architecture
 
 ## Output Format
 
-Create `.claude/feature-forge/ui-design.md` with comprehensive interface design:
+Create `$WORKSPACE/ui-design.md` with comprehensive interface design:
 
 ```markdown
 ---
@@ -179,8 +183,8 @@ equivalent]
 
 When finished:
 
-1. Write `ui-design.md` to `.claude/feature-forge/`
-2. Update `state.json` to reflect ui-design completion
+1. Write `ui-design.md` to `$WORKSPACE/`
+2. Update `$WORKSPACE/state.json` to reflect ui-design completion
 3. Report completion to orchestrator
 
 Your design document should be detailed enough for the frontend-engineer to implement without ambiguity about

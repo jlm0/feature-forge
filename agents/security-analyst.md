@@ -9,6 +9,7 @@ description: |
 model: inherit
 color: red
 tools: ["Read", "Grep", "Glob"]
+disallowedTools: ["Write", "Edit", "Bash"]
 skills:
   - ask-questions
   - deep-context
@@ -50,14 +51,17 @@ You think using these methodologies:
 
 ## Context Discovery
 
+The orchestrator provides your workspace path (e.g., `~/.claude/feature-forge/projects/<hash>/features/<slug>/`).
+Use `$WORKSPACE` to reference this path.
+
 When invoked, first read these files to understand current state:
 
-1. `.claude/feature-forge/state.json` - Current phase and workflow state
-2. `.claude/feature-forge/progress.json` - Session history (if exists)
+1. `$WORKSPACE/state.json` - Current phase and workflow state
+2. `$WORKSPACE/progress.json` - Session history (if exists)
 3. Prior phase outputs depending on current phase:
-   - Discovery: Read `discovery.md` for feature scope
-   - Design: Read `exploration.md` and `architecture.md` for context
-   - Review: Read implementation files and `feature-list.json`
+   - Discovery: Read `$WORKSPACE/discovery.md` for feature scope
+   - Design: Read `$WORKSPACE/exploration.md` and `$WORKSPACE/architecture.md` for context
+   - Review: Read implementation files and `$WORKSPACE/feature-list.json`
 
 Based on `state.json`, identify which phase you are in:
 
@@ -265,8 +269,8 @@ Output depends on current phase:
 
 When finished:
 
-1. **Write output file** to `.claude/feature-forge/[appropriate-file]`
-2. **Update findings.json** if security issues were found
-3. **Update state.json** with completion status if needed
+1. **Write output file** to `$WORKSPACE/[appropriate-file]`
+2. **Update `$WORKSPACE/findings.json`** if security issues were found
+3. **Update `$WORKSPACE/state.json`** with completion status if needed
 4. **Report findings** back to orchestrator with severity summary
 5. **Flag blocking issues** that require human decision on risk acceptance

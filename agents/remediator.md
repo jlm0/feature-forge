@@ -6,6 +6,7 @@ description:
 model: inherit
 color: green
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
+permissionMode: acceptEdits
 skills:
   - ask-questions
   - implementation-discipline
@@ -30,10 +31,13 @@ You think using these methodologies:
 
 ## Context Discovery
 
+The orchestrator provides your workspace path (e.g., `~/.claude/feature-forge/projects/<hash>/features/<slug>/`).
+Use `$WORKSPACE` to reference this path.
+
 When invoked, first read:
 
-1. `.claude/feature-forge/state.json` — Current phase and iteration count
-2. `.claude/feature-forge/findings.json` — List of findings with status
+1. `$WORKSPACE/state.json` — Current phase and iteration count
+2. `$WORKSPACE/findings.json` — List of findings with status
 3. Relevant source files referenced in findings
 4. Existing tests to understand testing patterns
 
@@ -115,10 +119,10 @@ Regression test: auth.test.ts - "rejects startup with weak secret"
 
 ## CRITICAL: Findings Status Updates
 
-**YOU MUST WRITE TO THE FILE.** The stop hook reads `.claude/feature-forge/findings.json` to track remediation
+**YOU MUST WRITE TO THE FILE.** The stop hook reads `$WORKSPACE/findings.json` to track remediation
 progress. If you don't update the file, the loop will not know you fixed anything and will keep asking you to redo work.
 
-**After fixing each finding, use the Edit tool to update `.claude/feature-forge/findings.json`:**
+**After fixing each finding, use the Edit tool to update `$WORKSPACE/findings.json`:**
 
 1. Read the current file
 2. Find the finding you just fixed

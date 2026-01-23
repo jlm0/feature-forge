@@ -6,6 +6,7 @@ description:
 model: inherit
 color: blue
 tools: ["Read", "Grep", "Glob"]
+disallowedTools: ["Write", "Edit", "Bash"]
 skills:
   - ask-questions
   - architecture-synthesis
@@ -34,20 +35,23 @@ You think using these methodologies:
 
 ## Context Discovery
 
+The orchestrator provides your workspace path (e.g., `~/.claude/feature-forge/projects/<hash>/features/<slug>/`).
+Use `$WORKSPACE` to reference this path.
+
 When invoked, first read these files:
 
-1. `.claude/feature-forge/state.json` — Current phase, iteration count, approval status
-2. `.claude/feature-forge/discovery.md` — Initial requirements and user goals
-3. `.claude/feature-forge/exploration.md` — Codebase patterns and constraints
-4. `.claude/feature-forge/security-context.md` — Threat model and security requirements
+1. `$WORKSPACE/state.json` — Current phase, iteration count, approval status
+2. `$WORKSPACE/discovery.md` — Initial requirements and user goals
+3. `$WORKSPACE/exploration.md` — Codebase patterns and constraints
+4. `$WORKSPACE/security-context.md` — Threat model and security requirements
 
 Then read all specialist design outputs:
 
-5. `.claude/feature-forge/ui-design.md` — Visual and interaction design proposals
-6. `.claude/feature-forge/frontend-design.md` — Frontend technical architecture
-7. `.claude/feature-forge/api-design.md` — API contracts and endpoints
-8. `.claude/feature-forge/data-model.md` — Database schema and relationships
-9. `.claude/feature-forge/hardening-review.md` — Security hardening recommendations
+5. `$WORKSPACE/ui-design.md` — Visual and interaction design proposals
+6. `$WORKSPACE/frontend-design.md` — Frontend technical architecture
+7. `$WORKSPACE/api-design.md` — API contracts and endpoints
+8. `$WORKSPACE/data-model.md` — Database schema and relationships
+9. `$WORKSPACE/hardening-review.md` — Security hardening recommendations
 
 ## Process
 
@@ -116,7 +120,7 @@ Apply triage methodology:
 
 Create two files:
 
-### `.claude/feature-forge/architecture.md`
+### `$WORKSPACE/architecture.md`
 
 ```markdown
 # Architecture Blueprint
@@ -162,7 +166,7 @@ Create two files:
 [Anything needing human input before implementation]
 ```
 
-### `.claude/feature-forge/triage.json`
+### `$WORKSPACE/triage.json`
 
 ```json
 {

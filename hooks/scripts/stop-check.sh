@@ -4,19 +4,12 @@ set -euo pipefail
 # Stop hook for Feature-Forge Ralph loops
 # Intercepts session exit to implement iterative implementation and remediation loops
 
-STATE_DIR="${CLAUDE_PROJECT_DIR:-.}/.claude/feature-forge"
-STATE_FILE="${STATE_DIR}/state.json"
-FEATURE_LIST="${STATE_DIR}/feature-list.json"
-FINDINGS_FILE="${STATE_DIR}/findings.json"
+# Source path utilities
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../../scripts/paths.sh"
 
 # Read hook input from stdin (contains transcript_path and other context)
 HOOK_INPUT=$(cat)
-
-# If no state file, workspace not initialized - allow exit
-if [[ ! -f "$STATE_FILE" ]]; then
-    echo '{"decision": "approve"}'
-    exit 0
-fi
 
 # Check for jq
 if ! command -v jq &> /dev/null; then
@@ -24,10 +17,49 @@ if ! command -v jq &> /dev/null; then
     exit 0
 fi
 
+# Get project directory and find active feature
+PROJECT_DIR=$(get_project_dir)
+FEATURES_DIR="$PROJECT_DIR/features"
+
+# If no features exist, allow exit
+if [[ ! -d "$FEATURES_DIR" ]]; then
+    echo '{"decision": "approve"}'
+    exit 0
+fi
+
+# Find the active feature (in implementation or remediation phase)
+ACTIVE_FEATURE=""
+for feature_dir in "$FEATURES_DIR"/*/; do
+    if [[ -d "$feature_dir" ]]; then
+        state_file="$feature_dir/state.json"
+        if [[ -f "$state_file" ]]; then
+            phase=$(jq -r '.phase // "unknown"' "$state_file" 2>/dev/null || echo "unknown")
+            status=$(jq -r '.status // "unknown"' "$state_file" 2>/dev/null || echo "unknown")
+            if [[ ("$phase" == "implementation" || "$phase" == "remediation") && "$status" != "complete" && "$status" != "cancelled" ]]; then
+                ACTIVE_FEATURE="$(basename "$feature_dir")"
+                break
+            fi
+        fi
+    fi
+done
+
+# If no feature in a loop phase, allow exit
+if [[ -z "$ACTIVE_FEATURE" ]]; then
+    echo '{"decision": "approve"}'
+    exit 0
+fi
+
+# Set paths for active feature
+STATE_DIR="$FEATURES_DIR/$ACTIVE_FEATURE"
+STATE_FILE="$STATE_DIR/state.json"
+FEATURE_LIST="$STATE_DIR/feature-list.json"
+FINDINGS_FILE="$STATE_DIR/findings.json"
+
 # Read current phase and iteration
 PHASE=$(jq -r '.phase // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
 ITERATION=$(jq -r '.iteration // 0' "$STATE_FILE" 2>/dev/null || echo "0")
 MAX_ITERATIONS=$(jq -r '.max_iterations // 50' "$STATE_FILE" 2>/dev/null || echo "50")
+FEATURE_NAME=$(jq -r '.feature // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
 
 # Function to check if transcript contains DONE promise
 check_done_promise() {
@@ -85,12 +117,12 @@ if [[ "$PHASE" == "implementation" ]]; then
     NEW_ITERATION=$(increment_iteration)
 
     # Block exit and continue loop
-    REASON="Continue implementing. Next feature: ${NEXT_FEATURE}"
+    REASON="Continue implementing '$FEATURE_NAME'. Next feature: ${NEXT_FEATURE}"
     if [[ -n "$NEXT_DESC" ]]; then
         REASON="${REASON} - ${NEXT_DESC}"
     fi
 
-    SYSTEM_MSG="Iteration ${NEW_ITERATION}/${MAX_ITERATIONS} | Features: ${COMPLETE_FEATURES}/${TOTAL_FEATURES} complete"
+    SYSTEM_MSG="[$ACTIVE_FEATURE] Iteration ${NEW_ITERATION}/${MAX_ITERATIONS} | Features: ${COMPLETE_FEATURES}/${TOTAL_FEATURES} complete"
 
     # Output JSON
     jq -n \
@@ -139,12 +171,12 @@ if [[ "$PHASE" == "remediation" ]]; then
     NEW_ITERATION=$(increment_iteration)
 
     # Block exit and continue loop
-    REASON="Continue remediation. Next finding: ${NEXT_FINDING} (${SEVERITY})"
+    REASON="Continue remediation for '$FEATURE_NAME'. Next finding: ${NEXT_FINDING} (${SEVERITY})"
     if [[ -n "$NEXT_DESC" ]]; then
         REASON="${REASON} - ${NEXT_DESC}"
     fi
 
-    SYSTEM_MSG="Iteration ${NEW_ITERATION}/${REMEDIATION_MAX} | Findings: ${RESOLVED_FINDINGS}/${TOTAL_FINDINGS} resolved"
+    SYSTEM_MSG="[$ACTIVE_FEATURE] Iteration ${NEW_ITERATION}/${REMEDIATION_MAX} | Findings: ${RESOLVED_FINDINGS}/${TOTAL_FINDINGS} resolved"
 
     # Output JSON
     jq -n \

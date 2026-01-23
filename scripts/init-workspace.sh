@@ -1,15 +1,41 @@
 #!/bin/bash
 # Feature-Forge Workspace Initialization
-# Creates the .claude/feature-forge/ directory structure for a new feature
+# Creates a new feature workspace in global state directory
 
 set -euo pipefail
 
-# Use CLAUDE_PROJECT_DIR if set, otherwise use current directory
-PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
-WORKSPACE_DIR="$PROJECT_DIR/.claude/feature-forge"
+# Source path utilities
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/paths.sh"
 
 FEATURE_DESCRIPTION="${1:-Unnamed feature}"
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# Generate feature slug from description
+FEATURE_SLUG=$(slugify "$FEATURE_DESCRIPTION")
+
+# Ensure project metadata exists
+ensure_project_metadata
+
+# Get workspace directory
+WORKSPACE_DIR=$(get_feature_dir "$FEATURE_SLUG")
+
+# Check if feature already exists
+if [[ -d "$WORKSPACE_DIR" ]]; then
+    STATE_FILE="$WORKSPACE_DIR/state.json"
+    if [[ -f "$STATE_FILE" ]]; then
+        STATUS=$(jq -r '.status // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
+        if [[ "$STATUS" == "complete" || "$STATUS" == "cancelled" ]]; then
+            echo "Feature '$FEATURE_SLUG' already exists and is $STATUS."
+            echo "To start fresh, delete: $WORKSPACE_DIR"
+            exit 1
+        else
+            echo "Feature '$FEATURE_SLUG' already exists and is in progress."
+            echo "Use 'resume $FEATURE_SLUG' to continue working on it."
+            exit 1
+        fi
+    fi
+fi
 
 # Create workspace directory structure
 mkdir -p "$WORKSPACE_DIR"
@@ -20,11 +46,13 @@ mkdir -p "$WORKSPACE_DIR/archive"
 cat > "$WORKSPACE_DIR/state.json" << EOF
 {
   "feature": "$FEATURE_DESCRIPTION",
+  "slug": "$FEATURE_SLUG",
   "branch": "",
   "group": "understanding",
   "phase": "discovery",
   "status": "pending",
   "iteration": 0,
+  "design_iteration": 0,
   "started_at": "$TIMESTAMP",
   "approvals": {}
 }
@@ -55,14 +83,19 @@ cat > "$WORKSPACE_DIR/findings.json" << EOF
 }
 EOF
 
-# Create placeholder phase output files
-touch "$WORKSPACE_DIR/discovery.md"
-touch "$WORKSPACE_DIR/exploration.md"
-touch "$WORKSPACE_DIR/security-context.md"
-touch "$WORKSPACE_DIR/architecture.md"
-touch "$WORKSPACE_DIR/hardening-review.md"
-touch "$WORKSPACE_DIR/summary.md"
+# Note: Phase output files (discovery.md, exploration.md, etc.) are created
+# by agents when they have content. File presence indicates phase completion.
 
-echo "Feature-Forge workspace initialized at $WORKSPACE_DIR"
-echo "Feature: $FEATURE_DESCRIPTION"
+echo "Feature-Forge workspace initialized"
+echo "  Feature: $FEATURE_DESCRIPTION"
+echo "  Slug: $FEATURE_SLUG"
+echo "  Workspace: $WORKSPACE_DIR"
 echo "Ready to begin UNDERSTANDING group"
+
+# Output JSON for orchestrator consumption
+echo "---"
+jq -n \
+    --arg slug "$FEATURE_SLUG" \
+    --arg workspace "$WORKSPACE_DIR" \
+    --arg description "$FEATURE_DESCRIPTION" \
+    '{slug: $slug, workspace: $workspace, description: $description}'

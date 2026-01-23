@@ -422,7 +422,7 @@ Claude Code uses hierarchical memory files:
 | **User**       | `~/.claude/CLAUDE.md`        | Personal preferences             |
 | **Project**    | `./CLAUDE.md`                | Team-shared context              |
 | **Local**      | `./CLAUDE.local.md`          | Private preferences (gitignored) |
-| **Workflow**   | `.claude/feature-forge/`     | Feature-Forge state              |
+| **Workflow**   | `~/.claude/feature-forge/`   | Feature-Forge state (global)     |
 
 ### CLAUDE.md Best Practices
 

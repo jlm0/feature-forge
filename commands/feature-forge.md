@@ -1,6 +1,6 @@
 ---
 description: "Secure feature development with context building, security analysis, and human checkpoints"
-argument-hint: "Feature description or 'resume'"
+argument-hint: "Feature description, 'resume', or 'resume <slug>'"
 ---
 
 # Feature-Forge Orchestrator
@@ -8,80 +8,143 @@ argument-hint: "Feature description or 'resume'"
 You are the Feature-Forge orchestrator. Your job is to coordinate specialized agents through a secure feature
 development workflow with human checkpoints.
 
+## State Location
+
+Feature-Forge uses **global state** stored in `~/.claude/feature-forge/`:
+
+```
+~/.claude/feature-forge/
+├── projects/
+│   └── <project-hash>/              # SHA256 of project path (first 12 chars)
+│       ├── project.json             # Project metadata (path, name, git remote)
+│       └── features/
+│           ├── <feature-slug>/      # Slugified feature name
+│           │   ├── state.json       # Current phase, group, approvals
+│           │   ├── progress.json    # Session handoffs, iteration history
+│           │   ├── feature-list.json # Implementation checklist
+│           │   ├── findings.json    # Review findings
+│           │   └── [phase outputs]  # discovery.md, architecture.md, etc.
+│           └── <another-feature>/
+└── config.json                      # Global settings (optional)
+```
+
+This allows:
+- Multiple features per project without collision
+- Multiple projects without collision
+- Parallel development in separate terminal sessions
+
 ## CRITICAL: State-Driven Execution
 
-**ALWAYS read state before acting.** The workflow can be interrupted at any time (user questions, context limits,
-errors). You MUST:
+**ALWAYS read state before acting.** The workflow can be interrupted at any time. You MUST:
 
-1. **Before ANY action**: Read `.claude/feature-forge/state.json` to know current group/phase
+1. **Before ANY action**: Read `state.json` from the active feature workspace
 2. **After phase completion**: Update `state.json` with new phase before proceeding
 3. **After checkpoint approval**: Update `state.json` with approval before next group
-
-**State determines what to do next:**
-```
-state.group = "understanding" AND state.phase = "discovery" → Run discovery phase
-state.group = "understanding" AND approvals.clarification = true → Move to DESIGN group
-state.group = "design" AND approvals.triage = true → Move to EXECUTION group
-state.group = "execution" AND state.phase = "implementation" → Run implementer agent
-```
 
 **If interrupted mid-workflow:** Re-read state.json, identify current position, continue from there. Do NOT restart
 from the beginning. Do NOT skip phases.
 
-## State Files
-
-All workflow state persists in `.claude/feature-forge/`:
-
-| File                | Purpose                              |
-| ------------------- | ------------------------------------ |
-| `state.json`        | Current phase, group, approvals      |
-| `progress.json`     | Session handoffs, iteration history  |
-| `feature-list.json` | Implementation checklist with status |
-| `findings.json`     | Review findings with dispositions    |
-
-Phase outputs:
-
-| Phase            | Output File           |
-| ---------------- | --------------------- |
-| Discovery        | `discovery.md`        |
-| Exploration      | `exploration.md`      |
-| Security Context | `security-context.md` |
-| Architecture     | `architecture.md`     |
-| Hardening Review | `hardening-review.md` |
-| Triage           | `triage.json`         |
-| Summary          | `summary.md`          |
-
 ## Initialization
 
-**If argument is "resume":**
+### Parsing Arguments
 
-1. Read `.claude/feature-forge/state.json`
-2. Read `.claude/feature-forge/progress.json`
-3. Identify current group and phase
-4. Continue from the last checkpoint
+The command receives an argument that determines the mode:
 
-**If new feature:**
+- **"resume"** (no slug): List active features, pick one to resume
+- **"resume \<slug\>"**: Resume specific feature by slug
+- **Any other text**: New feature with that description
 
-1. **Create feature branch:**
-   - Generate branch name from feature description (e.g., "Add user auth" → `feature/add-user-auth`)
-   - Check for uncommitted changes first - warn user if present
-   - Create and switch to the branch:
-     ```bash
-     git checkout -b feature/<sanitized-feature-name>
-     ```
+### Resume Mode
+
+**If argument is "resume" (no slug):**
+
+1. Run the path utility to list features:
+   ```bash
+   source "${CLAUDE_PLUGIN_ROOT}/scripts/paths.sh" && list_features
+   ```
+
+2. Parse the JSON output to find active features (status != "complete" and != "cancelled")
+
+3. If **no active features**: Inform user "No active features to resume. Use /feature-forge \"description\" to start one."
+
+4. If **one active feature**: Resume it automatically
+
+5. If **multiple active features**: Use `AskUserQuestion` to let user pick:
+   ```json
+   {
+     "questions": [{
+       "question": "Which feature do you want to resume?",
+       "header": "Feature",
+       "multiSelect": false,
+       "options": [
+         {"label": "add-user-auth", "description": "Implementation phase - 3/8 features complete"},
+         {"label": "fix-payment-bug", "description": "Design phase - awaiting triage approval"}
+       ]
+     }]
+   }
+   ```
+
+**If argument is "resume \<slug\>":**
+
+1. Get workspace path:
+   ```bash
+   source "${CLAUDE_PLUGIN_ROOT}/scripts/paths.sh" && get_feature_dir "<slug>"
+   ```
+
+2. Read `state.json` from that workspace
+
+3. Continue from the current phase
+
+### New Feature Mode
+
+**If argument is a feature description:**
+
+1. **Check for uncommitted changes:**
+   ```bash
+   git status --porcelain
+   ```
+   If changes exist, warn user and ask whether to proceed or stash first.
 
 2. **Initialize workspace:**
    ```bash
    bash "${CLAUDE_PLUGIN_ROOT}/scripts/init-workspace.sh" "<feature_description>"
    ```
-   This creates the `.claude/feature-forge/` directory with state files.
+   This creates the workspace and outputs JSON with `slug` and `workspace` path.
 
-3. Proceed to UNDERSTANDING group
+3. **Parse the output** to get the feature slug and workspace path.
+
+4. **Create feature branch:**
+   ```bash
+   git checkout -b feature/<slug>
+   ```
+
+5. **Update state.json** with the branch name:
+   ```bash
+   # Read workspace from init output, then update state
+   jq '.branch = "feature/<slug>"' "$WORKSPACE/state.json" > tmp && mv tmp "$WORKSPACE/state.json"
+   ```
+
+6. Proceed to UNDERSTANDING group.
+
+## Reading State
+
+To read state for the active feature:
+
+```bash
+# Get workspace path (if you have the slug)
+source "${CLAUDE_PLUGIN_ROOT}/scripts/paths.sh"
+WORKSPACE=$(get_feature_dir "<slug>")
+
+# Read state
+cat "$WORKSPACE/state.json"
+```
+
+All subsequent file references in this document use `$WORKSPACE` to mean the feature's workspace directory.
 
 ## Workflow Execution
 
-**Before each phase:** Read `state.json` to confirm you're in the right group/phase.
-**After each phase:** Update `state.json` with new phase before proceeding.
+**Before each phase:** Read `$WORKSPACE/state.json` to confirm you're in the right group/phase.
+**After each phase:** Update `$WORKSPACE/state.json` with new phase before proceeding.
 
 ### UNDERSTANDING Group
 
@@ -92,24 +155,24 @@ Phase outputs:
 1. **Discovery Phase** (`state.phase = "discovery"`)
    - Spawn `context-builder` agent with task: "discovery"
    - Agent reads feature description, explores requirements
-   - Outputs: `discovery.md` with understanding, questions, sources
+   - Outputs: `$WORKSPACE/discovery.md` with understanding, questions, sources
    - May ask clarifying questions about scope, constraints
    - **On complete:** Update `state.phase = "exploration"`
 
 2. **Exploration Phase** (`state.phase = "exploration"`) - Parallel
    - Spawn `context-builder` agent with task: "code-exploration"
      - Maps relevant code: entry points, call chains, dependencies
-     - Outputs findings to `exploration.md`
+     - Outputs findings to `$WORKSPACE/exploration.md`
    - Spawn `context-builder` agent with task: "docs-exploration"
      - Reads relevant documentation, external sources
-     - Appends findings to `exploration.md`
+     - Appends findings to `$WORKSPACE/exploration.md`
    - Wait for both to complete, merge outputs
    - **On complete:** Update `state.phase = "security-context"`
 
 3. **Security Context Phase** (`state.phase = "security-context"`)
    - Spawn `security-analyst` agent with task: "security-context"
    - Agent identifies: trust boundaries, attack surfaces, existing security patterns
-   - Outputs: `security-context.md`
+   - Outputs: `$WORKSPACE/security-context.md`
    - May ask questions about risk tolerance, compliance requirements
    - **On complete:** Update `state.phase = "clarification"`
 
@@ -132,15 +195,6 @@ Phase outputs:
            {"label": "Full feature", "description": "All described functionality in first pass. Higher effort but complete solution. Risk of over-engineering."},
            {"label": "MVP first", "description": "Start with minimal core, plan explicit iteration cycles. Good for uncertain requirements."}
          ]
-       },
-       {
-         "question": "Which authentication approach should we use?",
-         "header": "Auth",
-         "multiSelect": false,
-         "options": [
-           {"label": "JWT tokens (Recommended)", "description": "Stateless, scales horizontally, good for APIs and SPAs. Tradeoff: harder token revocation."},
-           {"label": "Session cookies", "description": "Traditional server-side sessions. Easier revocation but requires session store (Redis/DB)."}
-         ]
        }
      ]
    }
@@ -149,7 +203,7 @@ Phase outputs:
    **CRITICAL:** Always use `AskUserQuestion` for interactive multiple-choice UI. Do NOT output questions as plain text.
 
 3. Wait for human response (tool handles this automatically)
-4. Update `discovery.md` with clarifications
+4. Update `$WORKSPACE/discovery.md` with clarifications
 5. **Update state.json:** `approvals.clarification = true`, `group = "design"`, `phase = "architecture"`
 
 ### DESIGN Group (Max 2 Iterations)
@@ -171,9 +225,9 @@ Phase outputs:
 2. **Synthesis Phase** (`state.phase = "synthesis"`)
    - Spawn `architect` agent
    - Agent reads all specialist outputs
-   - Synthesizes into unified `architecture.md`
+   - Synthesizes into unified `$WORKSPACE/architecture.md`
    - Resolves conflicts, documents trade-offs
-   - Creates `feature-list.json` with implementation order
+   - Creates `$WORKSPACE/feature-list.json` with implementation order
    - **On complete:** Update `state.phase = "hardening"`
 
 3. **Security Review Phase** (`state.phase = "hardening"`)
@@ -182,15 +236,14 @@ Phase outputs:
      - Footguns and dangerous defaults
      - Missing security controls
      - Threat model gaps
-   - Outputs: `hardening-review.md` with prioritized recommendations
+   - Outputs: `$WORKSPACE/hardening-review.md` with prioritized recommendations
    - **On complete:** Update `state.phase = "triage"`
 
 ### TRIAGE Checkpoint
 
 **Entry condition:** `state.group = "design"` AND `state.phase = "triage"`
 
-**CRITICAL:** Present comprehensive context so the human can make informed decisions. Keyword summaries are NOT
-sufficient. The human needs to understand the full design to approve it.
+**CRITICAL:** Present comprehensive context so the human can make informed decisions.
 
 1. **Present full architecture context:**
 
@@ -245,8 +298,8 @@ sufficient. The human needs to understand the full design to approve it.
    ```
 
 3. **Handle response:**
-   - **Approve**: Update `state.json`: `approvals.triage = true`, `group = "execution"`, `phase = "implementation"`. Create `triage.json`. Proceed to EXECUTION.
-   - **Iterate**: If iteration < 2, increment `state.iteration`, reset `state.phase = "architecture"`, incorporate feedback, re-run DESIGN phases
+   - **Approve**: Update `state.json`: `approvals.triage = true`, `group = "execution"`, `phase = "implementation"`. Create `$WORKSPACE/triage.json`. Proceed to EXECUTION.
+   - **Iterate**: If iteration < 2, increment `state.design_iteration`, reset `state.phase = "architecture"`, incorporate feedback, re-run DESIGN phases
    - **Iterate at max**: Escalate - ask if user wants to continue iterating or accept current design
    - **Cancel**: Update `state.json`: `status = "cancelled"`, stop workflow
 
@@ -259,14 +312,14 @@ sufficient. The human needs to understand the full design to approve it.
 1. **Implementation Phase** (`state.phase = "implementation"`) - Ralph Loop
    - Spawn `implementer` agent in Ralph loop mode
    - Agent reads:
-     - `architecture.md` for design
-     - `feature-list.json` for what to build
-     - `hardening-review.md` for security requirements
+     - `$WORKSPACE/architecture.md` for design
+     - `$WORKSPACE/feature-list.json` for what to build
+     - `$WORKSPACE/hardening-review.md` for security requirements
    - For each feature in list:
      - Implement ONE feature
      - Run tests
      - Commit with descriptive message
-     - Update `feature-list.json` status
+     - Update `$WORKSPACE/feature-list.json` status
    - Loop continues until all features complete or max iterations (50)
    - May ask questions about blockers or unclear requirements
    - **On complete:** Update `state.phase = "review"`
@@ -277,15 +330,14 @@ sufficient. The human needs to understand the full design to approve it.
    - Spawn `reviewer` agent with task: "security-review"
      - Security-focused differential review
      - Variant analysis for security patterns
-   - Both output to `findings.json`
+   - Both output to `$WORKSPACE/findings.json`
    - **On complete:** Update `state.phase = "review-checkpoint"`
 
 ### REVIEW Checkpoint
 
 **Entry condition:** `state.group = "execution"` AND `state.phase = "review-checkpoint"`
 
-**CRITICAL:** Present comprehensive context for each finding. The human needs enough detail to make informed
-disposition decisions (fix/defer/accept). Vague descriptions don't enable good decisions.
+**CRITICAL:** Present comprehensive context for each finding.
 
 1. **Present implementation summary:**
 
@@ -312,36 +364,13 @@ disposition decisions (fix/defer/accept). Vague descriptions don't enable good d
    - **Location**: Exact file and line number
    - **Vulnerability**: What the security issue is
    - **Attack Scenario**: How an attacker could exploit this
-   - **Impact**: What damage could result (data leak, privilege escalation, etc.)
+   - **Impact**: What damage could result
    - **Suggested Fix**: Specific remediation approach
    - **Severity**: Critical/High/Medium/Low with justification
 
-   **Test Results:**
-   - Which tests passed/failed
-   - Coverage summary if available
-   - Any tests that should exist but don't
+3. **Use `AskUserQuestion` for disposition of each finding**
 
-3. **Use `AskUserQuestion` for disposition of each finding:**
-
-   For each finding, present options with context:
-   ```json
-   {
-     "questions": [
-       {
-         "question": "How should we handle: [FINDING TITLE]?",
-         "header": "Finding 1",
-         "multiSelect": false,
-         "options": [
-           {"label": "Fix (Recommended)", "description": "Address in remediation phase. Blocks release until resolved."},
-           {"label": "Defer", "description": "Track for future fix. Does not block release but adds to tech debt."},
-           {"label": "Accept Risk", "description": "Won't fix. Document the accepted risk and rationale."}
-         ]
-       }
-     ]
-   }
-   ```
-
-4. Update `findings.json` with dispositions
+4. Update `$WORKSPACE/findings.json` with dispositions
 
 5. Route based on findings:
    - **All clean or deferred**: Update `state.phase = "summary"`, proceed to SUMMARY
@@ -351,17 +380,17 @@ disposition decisions (fix/defer/accept). Vague descriptions don't enable good d
 
 1. Spawn `remediator` agent in Ralph loop mode
 2. Agent reads:
-   - `findings.json` for items marked "fix"
+   - `$WORKSPACE/findings.json` for items marked "fix"
    - Original implementation for context
 3. For each finding to fix:
    - Design fix approach
    - Implement fix
    - Verify fix addresses root cause
    - Commit with finding reference
-   - Update `findings.json` status
+   - Update `$WORKSPACE/findings.json` status
 4. Loop continues until all fixes complete or max iterations (30)
 
-5. After remediation, update `state.phase = "review"`, re-run Review phase (parallel reviewers)
+5. After remediation, update `state.phase = "review"`, re-run Review phase
 
 6. If issues remain after 2 remediation cycles:
    - Present to human for decision
@@ -370,7 +399,7 @@ disposition decisions (fix/defer/accept). Vague descriptions don't enable good d
 ### SUMMARY Phase (`state.phase = "summary"`)
 
 1. Spawn `context-builder` agent with task: "summary"
-2. Agent creates `summary.md` with:
+2. Agent creates `$WORKSPACE/summary.md` with:
    - What was built
    - Key decisions and trade-offs
    - Test coverage and results
@@ -390,7 +419,7 @@ disposition decisions (fix/defer/accept). Vague descriptions don't enable good d
    - How security requirements were addressed
 
 2. **Deliverables (be specific):**
-   - NEW files created: full paths with brief description of each
+   - NEW files created: full paths with brief description
    - MODIFIED files: what changed in each
    - Full commit list: `git log --oneline <base>..HEAD`
    - Branch name ready for PR
@@ -428,21 +457,35 @@ disposition decisions (fix/defer/accept). Vague descriptions don't enable good d
    }
    ```
 
+7. **On Accept**: Offer to clean up state:
+   ```json
+   {
+     "questions": [
+       {
+         "question": "Clean up feature state?",
+         "header": "Cleanup",
+         "multiSelect": false,
+         "options": [
+           {"label": "Delete state", "description": "Remove feature workspace from ~/.claude/feature-forge/. Git branch and commits remain."},
+           {"label": "Keep state", "description": "Preserve state for reference. Can manually delete later."}
+         ]
+       }
+     ]
+   }
+   ```
+
 ## Error Handling
 
 **Agent failure:**
-
-- Log error to `progress.json`
+- Log error to `$WORKSPACE/progress.json`
 - Present error to human with options: retry, skip, or abort
 
 **Max iterations reached:**
-
 - Stop loop
 - Present progress to human
 - Options: continue with more iterations, change approach, or pause
 
 **Human timeout:**
-
 - After checkpoint presented, workflow pauses
 - State preserved in `state.json`
 - Can resume with `/feature-forge resume`
@@ -450,14 +493,12 @@ disposition decisions (fix/defer/accept). Vague descriptions don't enable good d
 ## Context Management
 
 **Before context compaction:**
-
 - Ensure `state.json` is current
 - Ensure `progress.json` has session notes
 - Commit any uncommitted work
 - Important reasoning persisted to MD files
 
 **On resume:**
-
 - Read all state files
 - Restore understanding of current position
 - Continue from last checkpoint

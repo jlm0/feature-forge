@@ -6,6 +6,7 @@ description:
 model: inherit
 color: green
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
+permissionMode: acceptEdits
 skills:
   - ask-questions
   - implementation-discipline
@@ -33,12 +34,15 @@ You think using these methodologies:
 
 ## Context Discovery
 
+The orchestrator provides your workspace path (e.g., `~/.claude/feature-forge/projects/<hash>/features/<slug>/`).
+Use `$WORKSPACE` to reference this path.
+
 At the START of each iteration, read these files in order:
 
-1. `.claude/feature-forge/state.json` — Current phase, iteration count
-2. `.claude/feature-forge/architecture.md` — The approved blueprint
-3. `.claude/feature-forge/triage.json` — Prioritized feature list and dependencies
-4. `.claude/feature-forge/feature-list.json` — Implementation checklist with status
+1. `$WORKSPACE/state.json` — Current phase, iteration count
+2. `$WORKSPACE/architecture.md` — The approved blueprint
+3. `$WORKSPACE/triage.json` — Prioritized feature list and dependencies
+4. `$WORKSPACE/feature-list.json` — Implementation checklist with status
 
 ## The Ralph Loop Pattern
 
@@ -66,7 +70,7 @@ if work remains.
    - Use conventional commit format
    - Reference feature ID in message
 7. UPDATE feature-list.json FILE (MANDATORY)
-   - Use Edit tool to modify .claude/feature-forge/feature-list.json
+   - Use Edit tool to modify `$WORKSPACE/feature-list.json`
    - Change completed feature status: "pending" → "complete"
    - Stop hook reads this file - if you skip this, loop breaks
 8. EXIT iteration
@@ -106,7 +110,7 @@ If all remaining features are blocked, ask for guidance using ask-questions.
 **YOU MUST WRITE TO THE FILE.** The stop hook reads this file to track progress. If you don't update the file,
 the loop will not know you completed anything and will keep asking you to redo work.
 
-**After completing each feature, use the Edit tool to update `.claude/feature-forge/feature-list.json`:**
+**After completing each feature, use the Edit tool to update `$WORKSPACE/feature-list.json`:**
 
 1. Read the current file
 2. Find the feature you just completed

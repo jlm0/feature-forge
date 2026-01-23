@@ -9,6 +9,7 @@ description: |
 model: inherit
 color: cyan
 tools: ["Read", "Grep", "Glob", "WebSearch", "WebFetch"]
+disallowedTools: ["Write", "Edit", "Bash"]
 skills:
   - ask-questions
   - code-exploration
@@ -35,11 +36,14 @@ You think using these methodologies:
 
 ## Context Discovery
 
+The orchestrator provides your workspace path (e.g., `~/.claude/feature-forge/projects/<hash>/features/<slug>/`).
+Use `$WORKSPACE` to reference this path.
+
 When invoked, first read these files to understand current state:
 
-1. `.claude/feature-forge/state.json` - Current phase and workflow state
-2. `.claude/feature-forge/progress.json` - Session history and handoff notes (if exists)
-3. `.claude/feature-forge/discovery.md` - Prior discovery findings (if exists)
+1. `$WORKSPACE/state.json` - Current phase and workflow state
+2. `$WORKSPACE/progress.json` - Session history and handoff notes (if exists)
+3. `$WORKSPACE/discovery.md` - Prior discovery findings (if exists)
 
 Based on `state.json`, identify which phase you are in:
 
@@ -217,7 +221,7 @@ Output depends on current phase:
 
 When finished:
 
-1. **Write output file** to `.claude/feature-forge/[phase].md`
-2. **Update state.json** with completion status if needed
+1. **Write output file** to `$WORKSPACE/[phase].md`
+2. **Update `$WORKSPACE/state.json`** with completion status if needed
 3. **Report findings** back to orchestrator with a brief summary
 4. **Flag any blocking questions** that need human input before proceeding

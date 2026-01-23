@@ -6,6 +6,7 @@ description:
 model: inherit
 color: yellow
 tools: ["Read", "Grep", "Glob", "Bash"]
+disallowedTools: ["Write", "Edit"]
 skills:
   - ask-questions
   - code-review
@@ -28,11 +29,14 @@ You think using these methodologies:
 
 ## Context Discovery
 
+The orchestrator provides your workspace path (e.g., `~/.claude/feature-forge/projects/<hash>/features/<slug>/`).
+Use `$WORKSPACE` to reference this path.
+
 When invoked, first read:
 
-1. `.claude/feature-forge/state.json` — Current phase and workflow state
-2. `.claude/feature-forge/architecture.md` — Design decisions and constraints
-3. `.claude/feature-forge/feature-list.json` — What was implemented
+1. `$WORKSPACE/state.json` — Current phase and workflow state
+2. `$WORKSPACE/architecture.md` — Design decisions and constraints
+3. `$WORKSPACE/feature-list.json` — What was implemented
 4. Run `git diff HEAD~N` or `git log --oneline -N` to identify changed files
 
 ## Process
@@ -116,7 +120,7 @@ Focus on:
 
 ## Output Format
 
-Write findings to `.claude/feature-forge/findings.json`:
+Write findings to `$WORKSPACE/findings.json`:
 
 ```json
 {
@@ -153,8 +157,8 @@ Write findings to `.claude/feature-forge/findings.json`:
 
 After review:
 
-1. Write findings to `.claude/feature-forge/findings.json`
-2. Update `.claude/feature-forge/state.json` with review status
+1. Write findings to `$WORKSPACE/findings.json`
+2. Update `$WORKSPACE/state.json` with review status
 3. Present findings summary to orchestrator
 
 If no issues found, create findings.json with empty findings array and `blocking_deployment: false`.

@@ -6,6 +6,7 @@ description:
 model: inherit
 color: yellow
 tools: ["Read", "Grep", "Glob"]
+disallowedTools: ["Write", "Edit", "Bash"]
 skills:
   - ask-questions
   - data-modeling
@@ -28,11 +29,14 @@ You think using these methodologies:
 
 ## Context Discovery
 
+The orchestrator provides your workspace path (e.g., `~/.claude/feature-forge/projects/<hash>/features/<slug>/`).
+Use `$WORKSPACE` to reference this path.
+
 When invoked, first read these files to understand current state:
 
-1. `.claude/feature-forge/state.json` — Current phase and workflow progress
-2. `.claude/feature-forge/discovery.md` — Feature requirements and user needs
-3. `.claude/feature-forge/exploration.md` — Existing codebase patterns and architecture
+1. `$WORKSPACE/state.json` — Current phase and workflow progress
+2. `$WORKSPACE/discovery.md` — Feature requirements and user needs
+3. `$WORKSPACE/exploration.md` — Existing codebase patterns and architecture
 
 Then explore the codebase for existing data patterns:
 
@@ -84,7 +88,7 @@ Coordinate through the architect who synthesizes all designs.
 
 ## Output Format
 
-Write your design to `.claude/feature-forge/data-model.md` with this structure:
+Write your design to `$WORKSPACE/data-model.md` with this structure:
 
 ```markdown
 # Data Model: [Feature Name]

@@ -6,6 +6,7 @@ description:
 model: inherit
 color: blue
 tools: ["Read", "Grep", "Glob"]
+disallowedTools: ["Write", "Edit", "Bash"]
 skills:
   - ask-questions
   - frontend-engineering
@@ -29,12 +30,15 @@ You think using these methodologies:
 
 ## Context Discovery
 
+The orchestrator provides your workspace path (e.g., `~/.claude/feature-forge/projects/<hash>/features/<slug>/`).
+Use `$WORKSPACE` to reference this path.
+
 When invoked, first read these files to understand current state:
 
-1. `.claude/feature-forge/state.json` — Current phase and workflow status
-2. `.claude/feature-forge/discovery.md` — Feature requirements and constraints
-3. `.claude/feature-forge/exploration.md` — Existing frontend patterns and architecture
-4. `.claude/feature-forge/ui-design.md` — UI specifications to implement
+1. `$WORKSPACE/state.json` — Current phase and workflow status
+2. `$WORKSPACE/discovery.md` — Feature requirements and constraints
+3. `$WORKSPACE/exploration.md` — Existing frontend patterns and architecture
+4. `$WORKSPACE/ui-design.md` — UI specifications to implement
 
 Understanding existing patterns ensures your architecture integrates with established conventions for state management,
 component organization, and data fetching.
@@ -163,7 +167,7 @@ Your output feeds into the architect for synthesis into the unified architecture
 
 ## Output Format
 
-Create `.claude/feature-forge/frontend-design.md` with comprehensive frontend architecture:
+Create `$WORKSPACE/frontend-design.md` with comprehensive frontend architecture:
 
 ```markdown
 ---
@@ -260,8 +264,8 @@ api_integrations: [count]
 
 When finished:
 
-1. Write `frontend-design.md` to `.claude/feature-forge/`
-2. Update `state.json` to reflect frontend-design completion
+1. Write `frontend-design.md` to `$WORKSPACE/`
+2. Update `$WORKSPACE/state.json` to reflect frontend-design completion
 3. Report completion to orchestrator
 
 Your architecture document should be detailed enough for the implementer to build the frontend without ambiguity about

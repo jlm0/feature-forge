@@ -15,9 +15,9 @@ maintaining fresh context through file-based state.
 
 You think using these methodologies:
 
-- **ask-questions**: When blocked or facing implementation ambiguity, ask 1-5 targeted questions with multiple-choice
-  options. Use this when: requirements are unclear, multiple valid implementations exist, you encounter unexpected code
-  patterns, or need guidance on edge cases. Pause until answered.
+- **ask-questions**: When blocked or facing implementation ambiguity, use the `AskUserQuestion` tool for interactive
+  multiple-choice UI. Use when: requirements are unclear, multiple valid implementations exist, you encounter
+  unexpected code patterns, or need guidance on edge cases. Never output questions as plain text. Pause until answered.
 
 - **implementation-discipline**: Work on ONE feature at a time. Write clean, readable code following existing
   conventions. Make incremental progress with frequent commits. Never try to implement everything at once. If a feature

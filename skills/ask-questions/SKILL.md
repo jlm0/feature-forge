@@ -124,10 +124,41 @@ inattention.
 
 Design questions to maximize information gained while minimizing burden on the human.
 
-### Ask 1-5 Questions Maximum
+### CRITICAL: Use the AskUserQuestion Tool
 
-Batch related questions together, but keep the total count low. Long question lists overwhelm and reduce response
-quality. Prefer fewer, higher-impact questions over comprehensive lists.
+**Always use the `AskUserQuestion` tool for interactive questions.** This tool provides a proper UI with clickable
+multiple-choice options rather than requiring the user to type responses.
+
+**AskUserQuestion tool parameters:**
+- `questions`: Array of 1-4 question objects
+- Each question has: `question`, `header`, `options`, `multiSelect`
+- Each option has: `label`, `description`
+- Put the recommended option FIRST and add "(Recommended)" to its label
+
+**Example tool usage:**
+```json
+{
+  "questions": [
+    {
+      "question": "Which authentication approach should we use?",
+      "header": "Auth method",
+      "multiSelect": false,
+      "options": [
+        {"label": "JWT tokens (Recommended)", "description": "Stateless, works well with mobile apps and microservices"},
+        {"label": "Session cookies", "description": "Traditional approach, requires session store"},
+        {"label": "OAuth only", "description": "Delegate auth entirely to external provider"}
+      ]
+    }
+  ]
+}
+```
+
+**DO NOT** output questions as plain text and ask the user to type back. The interactive UI is faster and clearer.
+
+### Ask 1-4 Questions Maximum
+
+The AskUserQuestion tool supports 1-4 questions per call. Batch related questions together, but keep the total count
+low. Prefer fewer, higher-impact questions over comprehensive lists.
 
 ### Prefer Questions That Eliminate Branches
 
@@ -143,78 +174,31 @@ wasted exploration.
 - "What color should the button be?"
 - "Should the variable be called 'userData' or 'userInfo'?"
 
-### Offer Multiple-Choice Options When Possible
+### Offer 2-4 Options Per Question
 
-Reduce cognitive load by providing concrete options rather than open-ended questions. Options also demonstrate
-understanding of the problem space.
+The AskUserQuestion tool requires 2-4 options per question. Each option needs:
+- `label`: Short display text (1-5 words)
+- `description`: Explanation of what this choice means
 
-**Good:**
+The user can always select "Other" to provide custom input, so don't include an "Other" option manually.
 
-```
-Which authentication approach?
-a) JWT tokens (recommended for mobile app)
-b) Session cookies
-c) OAuth only
-```
+### Put Recommended Option First
 
-**Less good:**
+When a clear best practice exists, make it the first option and add "(Recommended)" to the label. This signals
+expertise and makes the default choice obvious.
 
-```
-How should authentication work?
-```
+### Use multiSelect When Appropriate
 
-### Suggest Reasonable Defaults
+Set `multiSelect: true` when choices are not mutually exclusive. For example: "Which features should be included?"
+allows selecting multiple items.
 
-Mark one option as recommended when a clear best practice exists. This signals expertise and gives the human a fast path
-if they trust the recommendation.
+### Use Short Headers
 
-Use parenthetical notes: `(recommended)`, `(default)`, `(suggested based on existing patterns)`
-
-### Include Fast-Path Response Option
-
-Allow the human to accept all defaults with a single word. This respects their time when recommendations align with
-their intent.
-
-```
-Reply with: defaults (or 1a 2a 3b)
-```
-
-### Number Questions, Letter Options
-
-Use consistent formatting: numbered questions (1, 2, 3) with lettered options (a, b, c). This enables concise responses
-like "1a 2b 3a" and reduces ambiguity.
-
-## Question Template
-
-Use this format for presenting questions:
-
-```
-Before I proceed, I need to clarify:
-
-1) [Question about first uncertainty]
-   a) [First option] (recommended)
-   b) [Second option]
-   c) Not sure - use default
-
-2) [Question about second uncertainty]
-   a) [First option] (recommended for [reason])
-   b) [Second option]
-   c) [Third option]
-
-3) [Question about third uncertainty]
-   a) [Option]
-   b) [Option]
-
-Reply with: defaults (or 1a 2b 3a)
-```
-
-**Template elements:**
-
-- Opening line signals that a pause is occurring
-- Each question is numbered with lettered options
-- Recommendations are marked with reasoning when helpful
-- "Not sure - use default" option available when appropriate
-- Closing line provides fast-path and format guidance
+The `header` field appears as a chip/tag (max 12 chars). Use brief labels like:
+- "Auth method"
+- "Scope"
+- "Approach"
+- "Database"
 
 ## Pause and Wait Pattern
 
@@ -281,19 +265,47 @@ Record confirmed answers in appropriate state files so future phases and session
 
 ### Presenting Questions
 
-When asking questions, use the question template format with:
+**Always use the AskUserQuestion tool.** Structure questions with:
 
-- Clear signal that work is pausing
-- Numbered questions with lettered multiple-choice options
-- Recommendations marked when applicable
-- Fast-path response option
+- Clear `question` text ending with a question mark
+- Short `header` for the chip/tag (max 12 chars)
+- 2-4 `options` with label and description
+- Recommended option listed first with "(Recommended)" in label
+- `multiSelect: true` only when multiple selections make sense
+
+**Example for clarification checkpoint:**
+```json
+{
+  "questions": [
+    {
+      "question": "What is the scope of this feature?",
+      "header": "Scope",
+      "multiSelect": false,
+      "options": [
+        {"label": "Minimal (Recommended)", "description": "Only the core functionality, defer nice-to-haves"},
+        {"label": "Full feature", "description": "Include all described functionality"},
+        {"label": "MVP + one extension", "description": "Core plus one additional capability"}
+      ]
+    },
+    {
+      "question": "Which existing patterns should we follow?",
+      "header": "Patterns",
+      "multiSelect": false,
+      "options": [
+        {"label": "Match existing (Recommended)", "description": "Follow patterns already in the codebase"},
+        {"label": "Introduce new pattern", "description": "Use a different approach with justification"}
+      ]
+    }
+  ]
+}
+```
 
 ### After Receiving Answers
 
 After answers are received:
 
 1. Acknowledge the response
-2. Restate interpretation for confirmation
+2. Restate interpretation for confirmation (as regular text output)
 3. Note any follow-up clarifications needed
 4. Proceed with work once confirmed
 

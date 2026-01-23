@@ -81,23 +81,37 @@ Phase outputs:
 **After UNDERSTANDING completes:**
 
 1. Collect questions from all agents (stored in phase output files)
-2. Present questions to human in structured format:
+2. **Use the `AskUserQuestion` tool** to present questions interactively:
 
+   ```json
+   {
+     "questions": [
+       {
+         "question": "What is the scope of this feature?",
+         "header": "Scope",
+         "multiSelect": false,
+         "options": [
+           {"label": "Minimal (Recommended)", "description": "Core functionality only"},
+           {"label": "Full feature", "description": "All described functionality"},
+           {"label": "MVP first", "description": "Start minimal, iterate"}
+         ]
+       },
+       {
+         "question": "Which authentication approach should we use?",
+         "header": "Auth",
+         "multiSelect": false,
+         "options": [
+           {"label": "JWT tokens (Recommended)", "description": "Stateless, good for APIs"},
+           {"label": "Session cookies", "description": "Traditional server-side sessions"}
+         ]
+       }
+     ]
+   }
    ```
-   Before proceeding to DESIGN, I need clarification:
 
-   1) [Question from discovery]
-      a) Option A
-      b) Option B
-      c) Not sure - use default
+   **CRITICAL:** Always use `AskUserQuestion` for interactive multiple-choice UI. Do NOT output questions as plain text.
 
-   2) [Question from exploration]
-      ...
-
-   Reply with: defaults (or 1a 2b etc)
-   ```
-
-3. Wait for human response
+3. Wait for human response (tool handles this automatically)
 4. Update `discovery.md` with clarifications
 5. Update `state.json`: `clarification.approved = true`
 

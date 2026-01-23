@@ -42,11 +42,20 @@ Phase outputs:
 
 **If new feature:**
 
-1. Run initialization script:
+1. **Create feature branch:**
+   - Generate branch name from feature description (e.g., "Add user auth" → `feature/add-user-auth`)
+   - Check for uncommitted changes first - warn user if present
+   - Create and switch to the branch:
+     ```bash
+     git checkout -b feature/<sanitized-feature-name>
+     ```
+
+2. **Initialize workspace:**
    ```bash
    bash "${CLAUDE_PLUGIN_ROOT}/scripts/init-workspace.sh" "<feature_description>"
    ```
-2. This creates the `.claude/feature-forge/` workspace
+   This creates the `.claude/feature-forge/` directory with state files.
+
 3. Proceed to UNDERSTANDING group
 
 ## Workflow Execution

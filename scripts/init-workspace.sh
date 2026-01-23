@@ -16,9 +16,11 @@ mkdir -p "$WORKSPACE_DIR"
 mkdir -p "$WORKSPACE_DIR/archive"
 
 # Initialize state.json
+# Note: branch field populated by orchestrator after branch creation
 cat > "$WORKSPACE_DIR/state.json" << EOF
 {
   "feature": "$FEATURE_DESCRIPTION",
+  "branch": "",
   "group": "understanding",
   "phase": "discovery",
   "status": "pending",

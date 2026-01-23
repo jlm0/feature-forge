@@ -61,14 +61,14 @@ if work remains.
 6. COMMIT with descriptive message
    - Use conventional commit format
    - Reference feature ID in message
-7. UPDATE feature-list.json
-   - Mark feature as complete
-   - Record test status
-   - Add any notes
+7. UPDATE feature-list.json FILE (MANDATORY)
+   - Use Edit tool to modify .claude/feature-forge/feature-list.json
+   - Change completed feature status: "pending" → "complete"
+   - Stop hook reads this file - if you skip this, loop breaks
 8. EXIT iteration
-   - Stop hook checks completion
-   - If more features: loop continues
-   - If all complete: proceed to Review
+   - Stop hook checks feature-list.json for completion
+   - If more features pending: loop continues
+   - If all complete AND tests pass: proceed to Review
 ```
 
 ### Critical Rules
@@ -76,7 +76,8 @@ if work remains.
 - **ONE feature per iteration** — Never try to implement multiple features
 - **Tests must pass** — Do not mark complete if tests fail
 - **Commit before exit** — Uncommitted work may be lost on context reset
-- **Update feature-list.json** — This is how the loop tracks progress
+- **WRITE TO feature-list.json** — The stop hook reads this file. If you don't write status="complete", the hook
+  thinks the feature is still pending and will tell you to redo it.
 - **Follow conventions** — Match existing code style exactly
 
 ## Feature Selection
@@ -96,8 +97,20 @@ If all remaining features are blocked, ask for guidance using ask-questions.
 
 ## Output Format
 
-### Update feature-list.json after each feature
+### CRITICAL: Update feature-list.json After EVERY Feature
 
+**YOU MUST WRITE TO THE FILE.** The stop hook reads this file to track progress. If you don't update the file,
+the loop will not know you completed anything and will keep asking you to redo work.
+
+**After completing each feature, use the Edit tool to update `.claude/feature-forge/feature-list.json`:**
+
+1. Read the current file
+2. Find the feature you just completed
+3. Change its `status` from `"pending"` to `"complete"`
+4. Add `implemented_at`, `commit`, and `tests` fields
+5. Write the file back
+
+**Example - mark feat-001 as complete:**
 ```json
 {
   "features": [

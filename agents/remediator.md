@@ -108,10 +108,20 @@ Addresses REV-001: JWT secret was loaded without validation.
 Regression test: auth.test.ts - "rejects startup with weak secret"
 ```
 
-## Findings Status Updates
+## CRITICAL: Findings Status Updates
 
-Update findings.json after each fix:
+**YOU MUST WRITE TO THE FILE.** The stop hook reads `.claude/feature-forge/findings.json` to track remediation
+progress. If you don't update the file, the loop will not know you fixed anything and will keep asking you to redo work.
 
+**After fixing each finding, use the Edit tool to update `.claude/feature-forge/findings.json`:**
+
+1. Read the current file
+2. Find the finding you just fixed
+3. Change its `status` from `"open"` to `"resolved"`
+4. Add the `resolution` object with details
+5. Write the file back
+
+**Example - mark REV-001 as resolved:**
 ```json
 {
   "id": "REV-001",
@@ -141,7 +151,7 @@ Each iteration produces:
 
 1. **Fixed code** — The actual implementation changes
 2. **Test files** — Regression tests for the fix
-3. **findings.json update** — Status change with verification details
+3. **findings.json FILE UPDATE** — Use Edit tool to change status to "resolved"
 4. **Git commit** — Atomic commit with finding reference
 
 ## Completion Signal

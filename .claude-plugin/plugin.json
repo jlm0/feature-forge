@@ -1,0 +1,6 @@
+{
+  "name": "feature-forge",
+  "version": "0.1.0",
+  "description": "Secure feature development with context building, security analysis, and human checkpoints",
+  "keywords": ["feature-development", "security", "workflow", "agents", "skills"]
+}

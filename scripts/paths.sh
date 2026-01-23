@@ -115,6 +115,101 @@ list_features() {
     echo "$features"
 }
 
+# Calculate days since a timestamp
+# Usage: DAYS=$(days_since "2026-01-15T10:00:00Z")
+days_since() {
+    local timestamp="$1"
+    local current_time
+    local feature_time
+
+    current_time=$(date +%s)
+
+    # Convert ISO timestamp to epoch (macOS compatible)
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        feature_time=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$timestamp" +%s 2>/dev/null || echo "0")
+    else
+        feature_time=$(date -d "$timestamp" +%s 2>/dev/null || echo "0")
+    fi
+
+    if [[ "$feature_time" -gt 0 ]]; then
+        local age_seconds=$((current_time - feature_time))
+        echo $((age_seconds / 86400))
+    else
+        echo "0"
+    fi
+}
+
+# List features with cleanup-relevant info
+# Output: JSON array with slug, status, phase, days_inactive
+list_features_for_cleanup() {
+    local project_dir
+    project_dir=$(get_project_dir)
+    local features_dir="$project_dir/features"
+    local stale_threshold_days=7
+
+    if [[ ! -d "$features_dir" ]]; then
+        echo "[]"
+        return
+    fi
+
+    local features="[]"
+    for feature_dir in "$features_dir"/*/; do
+        if [[ -d "$feature_dir" ]]; then
+            local slug
+            slug=$(basename "$feature_dir")
+            local state_file="$feature_dir/state.json"
+            if [[ -f "$state_file" ]]; then
+                local status phase last_activity started_at days_inactive category
+
+                status=$(jq -r '.status // "pending"' "$state_file" 2>/dev/null)
+                phase=$(jq -r '.phase // "unknown"' "$state_file" 2>/dev/null)
+                last_activity=$(jq -r '.last_activity // .started_at // ""' "$state_file" 2>/dev/null)
+                started_at=$(jq -r '.started_at // ""' "$state_file" 2>/dev/null)
+
+                # Calculate days since last activity
+                if [[ -n "$last_activity" ]]; then
+                    days_inactive=$(days_since "$last_activity")
+                else
+                    days_inactive=0
+                fi
+
+                # Categorize for cleanup
+                if [[ "$status" == "complete" ]]; then
+                    category="completed"
+                elif [[ "$status" == "cancelled" ]]; then
+                    category="cancelled"
+                elif [[ "$days_inactive" -ge "$stale_threshold_days" ]]; then
+                    category="stale"
+                else
+                    category="active"
+                fi
+
+                local feature_json
+                feature_json=$(jq -n \
+                    --arg slug "$slug" \
+                    --arg status "$status" \
+                    --arg phase "$phase" \
+                    --arg started_at "$started_at" \
+                    --arg last_activity "$last_activity" \
+                    --argjson days_inactive "$days_inactive" \
+                    --arg category "$category" \
+                    '{
+                        slug: $slug,
+                        status: $status,
+                        phase: $phase,
+                        started_at: $started_at,
+                        last_activity: $last_activity,
+                        days_inactive: $days_inactive,
+                        category: $category
+                    }')
+                features=$(echo "$features" | jq --argjson f "$feature_json" '. + [$f]')
+            fi
+        fi
+    done
+
+    echo "$features"
+}
+
 # Ensure project.json exists with metadata
 ensure_project_metadata() {
     local project_dir

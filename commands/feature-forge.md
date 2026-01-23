@@ -1,6 +1,6 @@
 ---
 description: "Secure feature development with context building, security analysis, and human checkpoints"
-argument-hint: "Feature description, 'resume', or 'resume <slug>'"
+argument-hint: "'<description>' | 'resume [slug]' | 'status' | 'cleanup'"
 ---
 
 # Feature-Forge Orchestrator
@@ -50,9 +50,90 @@ from the beginning. Do NOT skip phases.
 
 The command receives an argument that determines the mode:
 
+- **"status"**: Show all features for current project with their state
+- **"cleanup"**: Interactive cleanup of completed/cancelled/stale features
 - **"resume"** (no slug): List active features, pick one to resume
 - **"resume \<slug\>"**: Resume specific feature by slug
 - **Any other text**: New feature with that description
+
+---
+
+### Status Mode
+
+**If argument is "status":**
+
+1. Run the path utility to list features:
+   ```bash
+   source "${CLAUDE_PLUGIN_ROOT}/scripts/paths.sh" && list_features
+   ```
+
+2. Parse the JSON output and present a formatted table:
+
+   ```
+   Feature-Forge Status for: <project-name>
+
+   | Feature              | Status      | Phase          | Started    |
+   |----------------------|-------------|----------------|------------|
+   | add-user-auth        | in_progress | implementation | 2 days ago |
+   | fix-payment-bug      | complete    | -              | 5 days ago |
+   | add-dark-mode        | cancelled   | -              | 12 days ago|
+
+   Active: 1 | Completed: 1 | Cancelled: 1
+
+   Commands:
+   - /feature-forge resume add-user-auth
+   - /feature-forge cleanup
+   ```
+
+3. No further action needed - informational only.
+
+---
+
+### Cleanup Mode
+
+**If argument is "cleanup":**
+
+1. Run the path utility to list features:
+   ```bash
+   source "${CLAUDE_PLUGIN_ROOT}/scripts/paths.sh" && list_features
+   ```
+
+2. Parse the JSON and categorize features:
+   - **Completed**: status = "complete"
+   - **Cancelled**: status = "cancelled"
+   - **Stale**: status = "pending" or "in_progress" but no activity for 7+ days
+   - **Active**: everything else
+
+3. If no features to clean up, inform user: "No completed, cancelled, or stale features to clean up."
+
+4. Otherwise, use `AskUserQuestion` to let user select which to delete:
+
+   ```json
+   {
+     "questions": [
+       {
+         "question": "Which features would you like to clean up?",
+         "header": "Cleanup",
+         "multiSelect": true,
+         "options": [
+           {"label": "add-dark-mode (cancelled, 12 days ago)", "description": "Cancelled during discovery phase. Delete workspace."},
+           {"label": "fix-payment-bug (complete, 5 days ago)", "description": "Completed and merged. Delete workspace."},
+           {"label": "None", "description": "Cancel cleanup, keep all features."}
+         ]
+       }
+     ]
+   }
+   ```
+
+5. For each selected feature, delete its workspace directory:
+   ```bash
+   source "${CLAUDE_PLUGIN_ROOT}/scripts/paths.sh"
+   rm -rf "$(get_feature_dir "<slug>")"
+   ```
+
+6. Confirm deletion: "Cleaned up X feature(s). Y feature(s) remaining."
+
+---
 
 ### Resume Mode
 
@@ -99,32 +180,57 @@ The command receives an argument that determines the mode:
 
 **If argument is a feature description:**
 
-1. **Check for uncommitted changes:**
+1. **Check for completed/stale features first:**
+   ```bash
+   source "${CLAUDE_PLUGIN_ROOT}/scripts/paths.sh" && list_features
+   ```
+
+   If there are completed or cancelled features, offer cleanup before proceeding:
+
+   ```json
+   {
+     "questions": [
+       {
+         "question": "You have completed/cancelled features. Clean up before starting?",
+         "header": "Cleanup",
+         "multiSelect": false,
+         "options": [
+           {"label": "Yes, clean up first", "description": "Remove old feature workspaces, then start new feature."},
+           {"label": "No, proceed", "description": "Keep old features, start new feature immediately."}
+         ]
+       }
+     ]
+   }
+   ```
+
+   If user chooses cleanup, run the Cleanup Mode flow first, then continue.
+
+2. **Check for uncommitted changes:**
    ```bash
    git status --porcelain
    ```
    If changes exist, warn user and ask whether to proceed or stash first.
 
-2. **Initialize workspace:**
+3. **Initialize workspace:**
    ```bash
    bash "${CLAUDE_PLUGIN_ROOT}/scripts/init-workspace.sh" "<feature_description>"
    ```
    This creates the workspace and outputs JSON with `slug` and `workspace` path.
 
-3. **Parse the output** to get the feature slug and workspace path.
+4. **Parse the output** to get the feature slug and workspace path.
 
-4. **Create feature branch:**
+5. **Create feature branch:**
    ```bash
    git checkout -b feature/<slug>
    ```
 
-5. **Update state.json** with the branch name:
+6. **Update state.json** with the branch name:
    ```bash
    # Read workspace from init output, then update state
    jq '.branch = "feature/<slug>"' "$WORKSPACE/state.json" > tmp && mv tmp "$WORKSPACE/state.json"
    ```
 
-6. Proceed to UNDERSTANDING group.
+7. Proceed to UNDERSTANDING group.
 
 ## Reading State
 
@@ -144,7 +250,15 @@ All subsequent file references in this document use `$WORKSPACE` to mean the fea
 ## Workflow Execution
 
 **Before each phase:** Read `$WORKSPACE/state.json` to confirm you're in the right group/phase.
-**After each phase:** Update `$WORKSPACE/state.json` with new phase before proceeding.
+**After each phase:** Update `$WORKSPACE/state.json` with:
+- New `phase` value
+- Updated `last_activity` timestamp (ISO 8601 format)
+- Any other relevant state changes
+
+**Timestamps to maintain:**
+- `last_activity`: Update after every phase transition or significant action
+- `completed_at`: Set when user accepts at COMPLETION checkpoint
+- `cancelled_at`: Set when user cancels at any checkpoint
 
 ### UNDERSTANDING Group
 
@@ -298,10 +412,10 @@ All subsequent file references in this document use `$WORKSPACE` to mean the fea
    ```
 
 3. **Handle response:**
-   - **Approve**: Update `state.json`: `approvals.triage = true`, `group = "execution"`, `phase = "implementation"`. Create `$WORKSPACE/triage.json`. Proceed to EXECUTION.
-   - **Iterate**: If iteration < 2, increment `state.design_iteration`, reset `state.phase = "architecture"`, incorporate feedback, re-run DESIGN phases
+   - **Approve**: Update `state.json`: `approvals.triage = true`, `group = "execution"`, `phase = "implementation"`, `last_activity = <now>`. Create `$WORKSPACE/triage.json`. Proceed to EXECUTION.
+   - **Iterate**: If iteration < 2, increment `state.design_iteration`, reset `state.phase = "architecture"`, `last_activity = <now>`, incorporate feedback, re-run DESIGN phases
    - **Iterate at max**: Escalate - ask if user wants to continue iterating or accept current design
-   - **Cancel**: Update `state.json`: `status = "cancelled"`, stop workflow
+   - **Cancel**: Update `state.json`: `status = "cancelled"`, `cancelled_at = <now>`, stop workflow
 
 ### EXECUTION Group
 
@@ -457,7 +571,11 @@ All subsequent file references in this document use `$WORKSPACE` to mean the fea
    }
    ```
 
-7. **On Accept**: Offer to clean up state:
+7. **On Accept**:
+
+   First, update `state.json`: `status = "complete"`, `completed_at = <now>`.
+
+   Then offer to clean up state:
    ```json
    {
      "questions": [
@@ -466,12 +584,18 @@ All subsequent file references in this document use `$WORKSPACE` to mean the fea
          "header": "Cleanup",
          "multiSelect": false,
          "options": [
-           {"label": "Delete state", "description": "Remove feature workspace from ~/.claude/feature-forge/. Git branch and commits remain."},
-           {"label": "Keep state", "description": "Preserve state for reference. Can manually delete later."}
+           {"label": "Delete now", "description": "Remove feature workspace immediately. Git branch and commits remain."},
+           {"label": "Keep for now", "description": "Preserve state for reference. Use /feature-forge cleanup later."}
          ]
        }
      ]
    }
+   ```
+
+   If user chooses "Delete now":
+   ```bash
+   source "${CLAUDE_PLUGIN_ROOT}/scripts/paths.sh"
+   rm -rf "$(get_feature_dir "<slug>")"
    ```
 
 ## Error Handling

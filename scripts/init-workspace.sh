@@ -43,6 +43,7 @@ mkdir -p "$WORKSPACE_DIR/archive"
 
 # Initialize state.json
 # Note: branch field populated by orchestrator after branch creation
+# completed_at and cancelled_at are set by orchestrator when workflow ends
 cat > "$WORKSPACE_DIR/state.json" << EOF
 {
   "feature": "$FEATURE_DESCRIPTION",
@@ -54,6 +55,9 @@ cat > "$WORKSPACE_DIR/state.json" << EOF
   "iteration": 0,
   "design_iteration": 0,
   "started_at": "$TIMESTAMP",
+  "last_activity": "$TIMESTAMP",
+  "completed_at": null,
+  "cancelled_at": null,
   "approvals": {}
 }
 EOF

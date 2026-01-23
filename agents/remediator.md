@@ -4,7 +4,7 @@ description:
   MUST BE USED for fixing bugs and security issues identified during review, implementing remediation for findings,
   validating that fixes address root causes, or completing the remediation phase after code review.
 model: inherit
-color: cyan
+color: green
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
 ---
 

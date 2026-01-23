@@ -4,7 +4,7 @@ description:
   MUST BE USED for API contract design, endpoint planning, request/response schema definition, REST or GraphQL API
   architecture, or API versioning and error handling strategies during feature design.
 model: inherit
-color: green
+color: blue
 tools: ["Read", "Grep", "Glob"]
 ---
 

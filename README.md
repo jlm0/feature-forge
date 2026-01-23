@@ -12,7 +12,7 @@ Feature-Forge synthesizes learnings from multiple sources:
 | Source                              | Contribution                                                    |
 | ----------------------------------- | --------------------------------------------------------------- |
 | **feature-dev** (Anthropic)         | Phased workflow, specialized agents, clarification loops        |
-| **Trail of Bits skills**            | Security-first context building, hardening review, verification |
+| **Trail of Bits skills**            | Security methodologies: deep context, threat modeling, footguns |
 | **Ralph Wiggum** (Geoffrey Huntley) | Iterative loops, file-based memory persistence                  |
 | **Anthropic research**              | Context management, two-agent harness, progress tracking        |
 
@@ -22,45 +22,59 @@ Feature-Forge synthesizes learnings from multiple sources:
 2. **Security by design** — Threat model and harden before implementation
 3. **File-based memory** — Externalize findings to survive token limits
 4. **Iterative execution** — Ralph-style loops for implementation and remediation
-5. **Human stewardship** — Checkpoints at uncertainty points, not full autonomy
+5. **Human stewardship** — Checkpoints at decision points, not full autonomy
 6. **One feature at a time** — Incremental progress prevents context exhaustion
 
 ## The Workflow
 
 ```
-CONTEXT BUILDING (Linear)
+UNDERSTANDING (Linear → Parallel)
 ├── Discovery        → Understand requirements
-├── Exploration      → Map codebase patterns
-├── Audit            → Build security context
-├── Threat           → Model threats and mitigations
-├── Triage           → Prioritize for v1 (CHECKPOINT)
-├── Clarification    → Resolve ambiguities (CHECKPOINT)
-├── Architecture     → Design approaches (CHECKPOINT)
-└── Hardening        → Review for security footguns (CHECKPOINT)
+├── Exploration      → Map codebase (parallel: code + docs)
+└── Security Context → Trust boundaries, attack surfaces
 
-IMPLEMENTATION (Ralph Loop)
-└── Iterative: implement → test → commit → next feature
+CLARIFICATION [HUMAN INPUT]
+└── Questions        → Resolve ambiguities
 
-REVIEW (Human + Agent)
-├── Quality review
-├── Security review
-└── Decision: ship / fix / defer
+DESIGN (2 iterations max)
+├── Architecture     → Parallel specialists → synthesis
+├── Security Review  → Footgun detection
+└── Triage           → Prioritize for v1 [HUMAN CHECKPOINT]
 
-REMEDIATION (Ralph Loop, if needed)
-└── Iterative: fix → verify → commit → next finding
-
-SUMMARY
-└── Document and handoff
+EXECUTION (Ralph Loops)
+├── Implementation   → Build features (iterative)
+├── Review           → Quality + security (parallel)
+├── Remediation      → Fix issues (iterative, 2 max)
+└── Summary          → Document and handoff
 ```
+
+## Agents and Skills
+
+Feature-Forge uses **10 specialized agents** with **16 pre-loaded skills**:
+
+| Agent            | Role                    | Key Skills                                    |
+| ---------------- | ----------------------- | --------------------------------------------- |
+| context-builder  | Explore codebase/docs   | code-exploration, docs-research               |
+| security-analyst | Security analysis       | deep-context, threat-model, footgun-detection |
+| ui-ux-designer   | Visual/interaction      | ui-ux-design                                  |
+| frontend-engineer| Frontend technical      | frontend-engineering                          |
+| api-designer     | API contracts           | api-design                                    |
+| data-modeler     | Database schemas        | data-modeling                                 |
+| architect        | Synthesis               | architecture-synthesis, triage                |
+| implementer      | Write code              | implementation-discipline, testing-methodology|
+| reviewer         | Evaluate quality        | code-review, deep-context                     |
+| remediator       | Fix issues              | implementation-discipline, fix-verify         |
+
+**Agent = Who** (the actor) | **Skill = How** (the methodology)
 
 ## Documentation
 
 | Document                                             | Purpose                                  |
 | ---------------------------------------------------- | ---------------------------------------- |
-| [Architecture](docs/ARCHITECTURE.md)                 | Workflow phases, flow, structure         |
+| [Architecture](docs/ARCHITECTURE.md)                 | Phase groups, agents, skills, flow       |
 | [Context Persistence](docs/CONTEXT-PERSISTENCE.md)   | Memory patterns, JSON vs MD, Ralph loops |
 | [Plugin Structure](docs/PLUGIN-STRUCTURE.md)         | Skills, agents, commands, hooks          |
-| [Security Integration](docs/SECURITY-INTEGRATION.md) | Trail of Bits skill composition          |
+| [Security Integration](docs/SECURITY-INTEGRATION.md) | Security skills and methodologies        |
 | [Human Checkpoints](docs/HUMAN-CHECKPOINTS.md)       | Intervention points and feedback         |
 
 ## Status

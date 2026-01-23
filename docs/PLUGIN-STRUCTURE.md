@@ -5,33 +5,33 @@
 Claude Code plugins extend functionality through:
 
 - **Commands** — User-invokable entry points (`/feature-forge`)
-- **Skills** — Domain expertise loaded into main context
-- **Agents** — Subagents with isolated context windows
+- **Skills** — Methodologies that frame how agents think
+- **Agents** — Specialized actors with isolated context windows
 - **Hooks** — Event handlers (PreToolUse, PostToolUse, Stop, etc.)
 
 ## Directory Structure
 
 ```
-plugin-name/
+feature-forge/
 ├── .claude-plugin/
 │   └── plugin.json              # Plugin metadata (required)
 │
-├── commands/                    # User-invokable commands
-│   └── command-name.md          # /command-name entry point
+├── commands/
+│   └── feature-forge.md         # Main orchestrator command
 │
-├── skills/                      # Domain expertise packages
+├── skills/                      # Methodologies for agents
 │   └── skill-name/
 │       ├── SKILL.md             # Core instructions (required)
 │       ├── scripts/             # Executable code (token-free)
 │       ├── references/          # Loaded into context on demand
 │       └── assets/              # Used in output (not loaded)
 │
-├── agents/                      # Subagent definitions
-│   └── agent-name.md            # Agent system prompt
+├── agents/                      # Specialized actors
+│   └── agent-name.md            # Agent system prompt with pre-loaded skills
 │
 ├── hooks/                       # Event handlers
 │   ├── hooks.json               # Hook configuration
-│   └── hook-script.sh           # Hook implementation
+│   └── ralph-stop-hook.sh       # Implementation/remediation loops
 │
 └── README.md
 ```
@@ -48,25 +48,164 @@ Plugins use three-level loading to manage context:
 
 **Key insight:** Scripts execute without loading into context — they're token-free.
 
-## Plugin Metadata
+## Skills (16 Total)
 
-**plugin.json:**
+Skills are **methodologies** that frame how agents think. They are pre-loaded into agents at spawn time.
 
-```json
-{
-  "name": "feature-forge",
-  "version": "1.0.0",
-  "description": "Secure, human-stewarded feature development workflow",
-  "author": {
-    "name": "Author Name",
-    "email": "author@example.com"
-  }
-}
+### Skill = How (Methodology)
+
+| Skill                       | Purpose                              | Methodology                                     |
+| --------------------------- | ------------------------------------ | ----------------------------------------------- |
+| **code-exploration**        | Trace code, map architecture         | Entry points → call chains → dependencies       |
+| **docs-research**           | Read and digest external docs        | Identify sources → extract patterns → synthesize |
+| **deep-context**            | Ultra-granular code analysis         | Line-by-line, First Principles, 5 Whys          |
+| **threat-model**            | Security threat enumeration          | STRIDE, actor mapping, trust boundaries         |
+| **footgun-detection**       | API misuse and dangerous defaults    | Adversary modeling, edge case probing           |
+| **variant-hunt**            | Find similar issues                  | Start specific → generalize → stop at 50% FP    |
+| **fix-verify**              | Verify fixes address root cause      | Differential analysis, regression detection     |
+| **ui-ux-design**            | Visual design and UX                 | User flows, interaction patterns, accessibility |
+| **frontend-engineering**    | Frontend technical implementation    | State management, components, data fetching     |
+| **api-design**              | API contract design                  | REST/GraphQL conventions, versioning            |
+| **data-modeling**           | Database and schema design           | Relationships, normalization, migrations        |
+| **architecture-synthesis**  | System design from multiple inputs   | Trade-off analysis, blueprint creation          |
+| **implementation-discipline** | Writing production code            | Clean code, conventions, incremental progress   |
+| **testing-methodology**     | How to verify correctness            | Test selection, coverage, edge cases            |
+| **code-review**             | Evaluate code quality                | Bug patterns, convention adherence              |
+| **triage**                  | Prioritization decisions             | Impact, urgency, risk assessment                |
+
+### SKILL.md Structure
+
+```yaml
+---
+name: skill-name                    # Required: lowercase, hyphens, ≤64 chars
+description: "What methodology this teaches AND when to use it"  # Required
+---
+
+# Skill Title
+
+## Quick Start
+[Brief example showing the methodology in action]
+
+## Methodology
+
+### Step 1: [Action]
+[How to think about this step]
+
+### Step 2: [Action]
+[How to think about this step]
+
+## Decision Trees
+[Conditional logic for different scenarios]
+
+## References
+[Links to reference files for detailed information]
 ```
+
+### Skill Best Practices
+
+**DO:**
+
+- Use imperative form ("Trace code paths", "Identify entry points")
+- Focus on **how to think**, not just what to do
+- Provide concrete examples showing the methodology
+- Include decision trees for branching logic
+- Keep skills reusable across different contexts
+
+**DON'T:**
+
+- Make skills too specific to one phase
+- Duplicate methodology across multiple skills
+- Exceed ~500 lines (use references for more)
+- Include "When to Use" in body (already in description)
+
+## Agents (10 Total)
+
+Agents are **domain-specific actors** with isolated context windows. They are like a real development team.
+
+### Agent = Who (Role)
+
+| Agent                | Role                          | Pre-loaded Skills                                                         | Tools                                 |
+| -------------------- | ----------------------------- | ------------------------------------------------------------------------- | ------------------------------------- |
+| **context-builder**  | Explore codebase and docs     | code-exploration, docs-research                                           | Read, Grep, Glob, WebSearch, WebFetch |
+| **security-analyst** | Security analysis             | deep-context, threat-model, footgun-detection, variant-hunt, fix-verify   | Read, Grep, Glob                      |
+| **ui-ux-designer**   | Visual and interaction design | ui-ux-design                                                              | Read, Grep, Glob, WebFetch            |
+| **frontend-engineer**| Frontend technical design     | frontend-engineering                                                      | Read, Grep, Glob                      |
+| **api-designer**     | API contract design           | api-design                                                                | Read, Grep, Glob                      |
+| **data-modeler**     | Database schema design        | data-modeling                                                             | Read, Grep, Glob                      |
+| **architect**        | Synthesize into blueprint     | architecture-synthesis, triage                                            | Read, Grep, Glob                      |
+| **implementer**      | Write production code         | implementation-discipline, testing-methodology                            | Read, Write, Edit, Bash, Grep, Glob   |
+| **reviewer**         | Evaluate implementation       | code-review, deep-context                                                 | Read, Grep, Glob, Bash                |
+| **remediator**       | Fix identified issues         | implementation-discipline, testing-methodology, fix-verify                | Read, Write, Edit, Bash, Grep, Glob   |
+
+### Agent Structure
+
+```yaml
+---
+name: agent-name                   # Required: kebab-case
+description: "MUST BE USED for..." # Required: triggers auto-routing
+tools: Read, Grep, Glob            # Required: restricts available tools
+model: sonnet                      # Optional: sonnet, opus, haiku
+color: blue                        # Optional: UI indicator
+---
+
+You are a [role] agent with expertise in [domain].
+
+## Pre-loaded Skills
+
+You think using these methodologies:
+- **[skill-1]**: [brief description of how it frames your thinking]
+- **[skill-2]**: [brief description of how it frames your thinking]
+
+## Context Discovery
+
+When invoked, first read:
+- .claude/feature-forge/state.json (current phase)
+- [Relevant prior phase outputs]
+- [Necessary context files]
+
+## Process
+
+1. [Step one using your skills]
+2. [Step two using your skills]
+3. ...
+
+## Output Format
+
+[Define expected output structure]
+
+## Completion
+
+[What to do when finished, what files to update]
+```
+
+### Agent Tool Categories
+
+| Agent Type           | Tools                                 | Purpose                    |
+| -------------------- | ------------------------------------- | -------------------------- |
+| Read-only (analysts) | Read, Grep, Glob                      | Examine without changing   |
+| Research (builders)  | Read, Grep, Glob, WebSearch, WebFetch | Explore code and docs      |
+| Writers (coders)     | Read, Write, Edit, Bash, Grep, Glob   | Implement changes          |
+
+### Agent Best Practices
+
+**DO:**
+
+- Use "MUST BE USED for..." in description for auto-routing
+- Pre-load relevant skills in the agent definition
+- Include context discovery steps (agents start fresh)
+- Define clear output format and file locations
+- Specify completion behavior (what to update)
+
+**DON'T:**
+
+- Create too many agents (routing confusion)
+- Omit skill loading (agents need framing)
+- Use vague descriptions (won't trigger correctly)
+- Let agents spawn sub-agents (1-level max)
 
 ## Commands
 
-Commands are user-invokable entry points. They orchestrate workflows.
+Commands are user-invokable entry points that orchestrate the workflow.
 
 ### Command Structure
 
@@ -75,7 +214,6 @@ Commands are user-invokable entry points. They orchestrate workflows.
 description: "Clear description of what this command does AND when to use it"
 argument-hint: "Optional hint for arguments"
 allowed-tools: ["Tool1", "Tool2"]          # Optional: restrict tools
-hide-from-slash-command-tool: "true"        # Optional: hide from /skill list
 ---
 
 # Command Title
@@ -89,193 +227,46 @@ Instructions that guide Claude's behavior when the command is invoked.
 3. ...
 ```
 
-### Command Best Practices
+### Orchestrator Command
 
-- **Description is critical** — It determines when/how the command appears
-- **Include workflow phases** — Clear steps for Claude to follow
-- **Reference agents** — Tell Claude which agents to spawn for which phases
-- **Define checkpoints** — Where to pause for human input
-- **Use $ARGUMENTS** — Access user-provided arguments
-
-### Example: Orchestrator Command
+The main `/feature-forge` command orchestrates the entire workflow:
 
 ```yaml
 ---
-description: "Secure feature development with security analysis and human checkpoints"
+description: "Secure feature development with context building, security analysis, and human checkpoints"
 argument-hint: "Feature description or 'resume'"
 ---
 
-# Feature-Forge
+# Feature-Forge Orchestrator
 
 ## Initialization
 1. Check for existing state.json
 2. If resuming: read progress, continue from checkpoint
-3. If new: create workspace, start Discovery phase
+3. If new: create workspace, start UNDERSTANDING group
 
 ## Phase Execution
-For each phase:
-1. Update state.json to in_progress
-2. Launch appropriate agent
-3. Agent writes outputs to files
-4. Check if human checkpoint needed
-5. Update state.json to complete
 
-## Agents
-- Discovery, Exploration, Clarification: context-builder agent
-- Audit, Threat, Triage: security-analyst agent
-- Architecture, Hardening: architect agent
-- Implementation: implementer agent (Ralph-compatible)
-- Review: reviewer agent
-- Remediation: remediator agent (Ralph-compatible)
+### UNDERSTANDING Group
+1. Spawn context-builder for Discovery
+2. Spawn parallel context-builders for Exploration (code + docs)
+3. Spawn security-analyst for Security Context
+
+### CLARIFICATION Group
+1. Present questions to human
+2. Update discovery.md with answers
+
+### DESIGN Group (2 iterations max)
+1. Spawn parallel specialists: ui-ux-designer, frontend-engineer, api-designer, data-modeler
+2. Spawn architect to synthesize
+3. Spawn security-analyst for hardening review
+4. Present to human for approval [CHECKPOINT]
+
+### EXECUTION Group
+1. Spawn implementer in Ralph loop
+2. Spawn parallel reviewers (quality + security)
+3. If issues: spawn remediator in Ralph loop (2 max)
+4. Spawn context-builder for summary
 ```
-
-## Skills
-
-Skills package domain-specific knowledge and workflows.
-
-### SKILL.md Structure
-
-```yaml
----
-name: skill-name                    # Required: lowercase, hyphens, ≤64 chars
-description: "What it does AND when to use it"  # Required: ≤1024 chars
----
-
-# Skill Title
-
-## Quick Start
-[Brief example or entry point]
-
-## Workflow
-[Step-by-step instructions]
-
-## Decision Trees
-[Conditional logic for different scenarios]
-
-## References
-[Links to reference files for detailed information]
-```
-
-### Skill Best Practices
-
-**DO:**
-
-- Use imperative form ("Extract text", "Validate output")
-- Provide concrete examples over verbose explanations
-- Include code samples for technical skills
-- Add decision trees for complex workflows
-- Reference bundled files with clear guidance
-
-**DON'T:**
-
-- Include "When to Use" in body (already in description)
-- Duplicate info between SKILL.md and references
-- Exceed ~500 lines (use references for more)
-- Add unnecessary files (README, CHANGELOG)
-
-### Scripts Directory
-
-Scripts execute without loading into context — they're token-free.
-
-**When to include:**
-
-- Code that would be repeatedly rewritten
-- Operations requiring deterministic reliability
-- State management, JSON manipulation
-
-**Example:**
-
-```python
-#!/usr/bin/env python3
-"""
-state-manager.py - Manage Feature-Forge workflow state
-
-Usage:
-    python state-manager.py get <key>
-    python state-manager.py set <key> <value>
-    python state-manager.py transition <phase> <status>
-"""
-```
-
-### References Directory
-
-Detailed documentation loaded into context when needed.
-
-**When to include:**
-
-- Detailed phase instructions
-- API specifications, schemas
-- Domain knowledge too large for SKILL.md
-
-**Best practices:**
-
-- Keep info in ONE place (SKILL.md OR references, not both)
-- Include table of contents for files >100 lines
-- Avoid deep nesting — link directly from SKILL.md
-- Use clear filenames indicating content
-
-## Agents (Subagents)
-
-Agents are specialized mini-agents with:
-
-- **Own system prompt** — Custom instructions
-- **Isolated context window** — Prevents context pollution
-- **Configurable tools** — Restricted or expanded access
-
-### Agent Structure
-
-```yaml
----
-name: agent-name                   # Required: kebab-case
-description: "MUST BE USED for..."  # Required: triggers auto-routing
-tools: Read, Grep, Glob            # Optional: restricts tools
-model: sonnet                      # Optional: sonnet, opus, haiku
-color: blue                        # Optional: UI indicator
----
-
-You are a specialized agent for [purpose].
-
-## Context Discovery
-When invoked, first read:
-- Relevant state files
-- Prior phase outputs
-- Necessary context
-
-## Process
-1. Step one
-2. Step two
-3. ...
-
-## Output Format
-[Define expected output structure]
-
-## Completion
-[What to do when finished]
-```
-
-### Agent Tool Categories
-
-| Agent Type            | Recommended Tools                     |
-| --------------------- | ------------------------------------- |
-| Read-only (reviewers) | Read, Grep, Glob                      |
-| Research (analysts)   | Read, Grep, Glob, WebFetch, WebSearch |
-| Writers (developers)  | Read, Write, Edit, Bash, Glob, Grep   |
-| Full access           | Omit tools field (inherits parent)    |
-
-### Agent Best Practices
-
-**DO:**
-
-- Use "MUST BE USED for..." in description for auto-routing
-- Include context discovery steps (agents start fresh)
-- Define clear output format
-- Specify completion behavior
-
-**DON'T:**
-
-- Create too many agents (routing confusion)
-- Omit context gathering (agents don't inherit conversation)
-- Use vague descriptions (won't trigger correctly)
 
 ## Hooks
 
@@ -291,26 +282,6 @@ Hooks respond to events during Claude Code execution.
 | **SubagentStop** | When subagent completes    | Result processing     |
 | **SessionStart** | Session begins             | Initialization        |
 | **Notification** | Notifications sent         | Alerts, logging       |
-
-### hooks.json Structure
-
-```json
-{
-  "description": "Hook description",
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/stop-hook.sh"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
 
 ### Stop Hook for Ralph Loops
 
@@ -337,7 +308,7 @@ The Stop hook intercepts session exit to implement iterative loops:
 }
 ```
 
-## Feature-Forge Plugin Structure
+## Complete Plugin Structure
 
 ```
 feature-forge/
@@ -348,31 +319,39 @@ feature-forge/
 │   └── feature-forge.md           # Main orchestrator
 │
 ├── agents/
-│   ├── context-builder.md         # Discovery, Exploration, Clarification
-│   ├── security-analyst.md        # Audit, Threat, Triage
-│   ├── architect.md               # Architecture, Hardening
-│   ├── implementer.md             # Implementation (Ralph-compatible)
-│   ├── reviewer.md                # Review
-│   └── remediator.md              # Remediation (Ralph-compatible)
+│   ├── context-builder.md         # code-exploration, docs-research
+│   ├── security-analyst.md        # deep-context, threat-model, footgun-detection, variant-hunt, fix-verify
+│   ├── ui-ux-designer.md          # ui-ux-design
+│   ├── frontend-engineer.md       # frontend-engineering
+│   ├── api-designer.md            # api-design
+│   ├── data-modeler.md            # data-modeling
+│   ├── architect.md               # architecture-synthesis, triage
+│   ├── implementer.md             # implementation-discipline, testing-methodology
+│   ├── reviewer.md                # code-review, deep-context
+│   └── remediator.md              # implementation-discipline, testing-methodology, fix-verify
 │
 ├── skills/
-│   ├── audit-context/SKILL.md     # Wraps ToB audit-context-building
-│   ├── threat-model/SKILL.md      # STRIDE methodology
-│   ├── sharp-edges/SKILL.md       # Wraps ToB sharp-edges
-│   ├── variant-hunt/SKILL.md      # Wraps ToB variant-analysis
-│   └── fix-verify/SKILL.md        # Wraps ToB fix-review
+│   ├── code-exploration/SKILL.md
+│   ├── docs-research/SKILL.md
+│   ├── deep-context/SKILL.md
+│   ├── threat-model/SKILL.md
+│   ├── footgun-detection/SKILL.md
+│   ├── variant-hunt/SKILL.md
+│   ├── fix-verify/SKILL.md
+│   ├── ui-ux-design/SKILL.md
+│   ├── frontend-engineering/SKILL.md
+│   ├── api-design/SKILL.md
+│   ├── data-modeling/SKILL.md
+│   ├── architecture-synthesis/SKILL.md
+│   ├── implementation-discipline/SKILL.md
+│   ├── testing-methodology/SKILL.md
+│   ├── code-review/SKILL.md
+│   └── triage/SKILL.md
 │
 ├── scripts/
 │   ├── init-workspace.sh          # Creates .claude/feature-forge/
 │   ├── state-manager.py           # JSON state operations
-│   ├── progress-tracker.py        # Session handoffs
-│   └── archive-session.py         # Archive old progress
-│
-├── references/
-│   ├── phase-discovery.md
-│   ├── phase-exploration.md
-│   ├── phase-audit.md
-│   └── ...
+│   └── progress-tracker.py        # Session handoffs
 │
 ├── hooks/
 │   ├── hooks.json
@@ -381,6 +360,15 @@ feature-forge/
 └── README.md
 ```
 
+## Key Distinctions
+
+| Concept   | Answers | Example                                       |
+| --------- | ------- | --------------------------------------------- |
+| **Agent** | Who?    | "The security analyst examines the code"      |
+| **Skill** | How?    | "Using threat modeling methodology (STRIDE)"  |
+| **Phase** | When?   | "During the Design group"                     |
+| **Tool**  | With?   | "Using Read, Grep, Glob to explore"           |
+
 ## Token Budget
 
 | Component           | Tokens     | Notes             |
@@ -388,18 +376,18 @@ feature-forge/
 | Plugin metadata     | ~500       | Always loaded     |
 | Command body        | ~1,000     | On invocation     |
 | Active agent        | ~800       | One at a time     |
-| Phase reference     | ~2,000     | On demand         |
+| Pre-loaded skills   | ~2,000     | Per agent         |
 | Context files       | ~3,000     | Varies            |
 | **Scripts**         | **0**      | Token-free        |
 | **Total per phase** | **~7,000** | Well under limits |
 
 ## Anti-Patterns
 
-| Anti-Pattern             | Problem            | Solution                   |
-| ------------------------ | ------------------ | -------------------------- |
-| Verbose explanations     | Wastes context     | Concise examples           |
-| "When to Use" in body    | Already triggered  | Put in description         |
-| Deeply nested references | Hard to navigate   | One level deep             |
-| Too many agents          | Routing confusion  | Consolidate by phase-group |
-| Vague descriptions       | Won't auto-trigger | "MUST BE USED for..."      |
-| No context discovery     | Agents start fresh | Include file reading steps |
+| Anti-Pattern             | Problem               | Solution                        |
+| ------------------------ | --------------------- | ------------------------------- |
+| Skill-less agents        | No methodology        | Every agent needs skills        |
+| Nested agent spawning    | Context explosion     | 1-level max nesting             |
+| Verbose explanations     | Wastes context        | Concise methodology examples    |
+| Too many agents          | Routing confusion     | 10 domain-specific actors       |
+| Vague descriptions       | Won't auto-trigger    | "MUST BE USED for..."           |
+| No context discovery     | Agents start fresh    | Include file reading steps      |

@@ -2,11 +2,12 @@
 
 ## Philosophy
 
-Feature-Forge operates on a principle of **guided autonomy**, not full automation:
+Feature-Forge operates on a principle of **human stewardship**, not full automation:
 
-- AI handles routine execution within defined parameters
-- Humans intervene at pivotal moments with uncertainty
-- Quality emerges from human-AI collaboration, not replacement
+- AI handles execution within defined parameters
+- Humans provide business context and make trade-off decisions
+- Quality emerges from human-AI collaboration
+- The human is the orchestrating architect
 
 _"Think of it as a relay race where you're passing the baton."_
 
@@ -14,7 +15,7 @@ _"Think of it as a relay race where you're passing the baton."_
 
 Without checkpoints:
 
-- Agents may declare tasks complete without proper verification
+- Agents may declare tasks complete without verification
 - Design decisions are made without stakeholder input
 - Security trade-offs are chosen without business context
 - Errors compound through subsequent phases
@@ -28,23 +29,22 @@ With checkpoints:
 
 ## Checkpoint Locations
 
-| Checkpoint               | After Phase        | What's Reviewed             | Typical Decision            |
-| ------------------------ | ------------------ | --------------------------- | --------------------------- |
-| **Triage**               | Triage             | Security priorities for v1  | Approve / Adjust priorities |
-| **Clarification**        | Clarification      | Resolved ambiguities        | Confirm understanding       |
-| **Architecture**         | Architecture       | Design approach             | Approve / Request changes   |
-| **Hardening**            | Hardening          | Security review of design   | Approve / Add requirements  |
-| **Implementation Start** | Pre-Implementation | Ready to write code         | Approve start / Hold        |
-| **Review**               | Review             | Quality & security findings | Ship / Fix now / Defer      |
-| **Completion**           | Summary            | Final deliverable           | Accept / Revise             |
+Feature-Forge has checkpoints at key decision points:
+
+| Checkpoint         | After Phase              | What's Reviewed                   | Typical Decision              |
+| ------------------ | ------------------------ | --------------------------------- | ----------------------------- |
+| **Clarification**  | UNDERSTANDING group      | Ambiguities and questions         | Provide answers               |
+| **Design Triage**  | DESIGN group (each iter) | Architecture + security review    | Approve / Request changes     |
+| **Review**         | Implementation           | Quality & security findings       | Ship / Fix now / Defer        |
+| **Completion**     | Summary                  | Final deliverable                 | Accept / Revise               |
 
 ## Checkpoint Flow
 
 ```
-Phase completes
+Phase group completes
       │
       ▼
-Update state.json: phase=X, status=pending_approval
+Update state.json: group=X, status=pending_approval
       │
       ▼
 Present summary to human:
@@ -56,118 +56,126 @@ Present summary to human:
       ▼
 Wait for human response
       │
-      ├── Approved ──► Update state.json approvals, proceed
+      ├── Approved ──► Update state.json, proceed to next group
       │
-      ├── Feedback ──► Incorporate feedback, re-run phase
+      ├── Feedback ──► Incorporate feedback, may re-run phases
       │
       └── Questions ──► Answer questions, then re-present
 ```
 
-## State Tracking for Checkpoints
+## Checkpoints by Group
 
-**state.json approvals section:**
+### CLARIFICATION Checkpoint
 
-```json
-{
-  "phase": "implementation",
-  "approvals": {
-    "triage": {
-      "approved": true,
-      "approved_at": "2026-01-22T10:30:00Z",
-      "notes": "Accepted all v1 requirements"
-    },
-    "architecture": {
-      "approved": true,
-      "approved_at": "2026-01-22T12:00:00Z",
-      "notes": "Approved with minor change to error handling"
-    },
-    "hardening": {
-      "approved": true,
-      "approved_at": "2026-01-22T14:00:00Z",
-      "notes": "Added rate limiting to requirements"
-    },
-    "implementation_start": {
-      "approved": true,
-      "approved_at": "2026-01-22T14:30:00Z"
-    }
-  }
-}
-```
+**When:** After UNDERSTANDING group, before DESIGN
 
-## Checkpoint: Triage
-
-**Purpose:** Ensure security priorities align with business needs and risk appetite.
+**Purpose:** Resolve ambiguities discovered during exploration.
 
 **What's presented:**
 
-- v1 security requirements (must have)
-- Deferred items (can wait)
-- Accepted risks (documented trade-offs)
+- Questions about requirements
+- Unclear business rules discovered
+- Technology choices that need input
+- Scope clarifications
 
-**Human decides:**
+**Human provides:**
 
-- Are priorities correct?
-- Should anything be promoted/demoted?
-- Are accepted risks acceptable?
+- Answers to specific questions
+- Business context
+- Priority guidance
+- Scope decisions
 
-**Output:** Updated triage.json with approval
+**Output:** Updated `discovery.md` with clarifications
 
-## Checkpoint: Architecture
+### DESIGN Checkpoint (Triage)
 
-**Purpose:** Ensure design approach is sound before implementation investment.
+**When:** After each DESIGN iteration (max 2)
+
+**Purpose:** Approve architectural approach before implementation investment.
 
 **What's presented:**
 
-- Chosen architecture with rationale
-- Alternative approaches considered
-- Trade-offs (complexity, performance, security)
+- Architecture summary from specialists
+- Security review (hardening findings)
+- Threat model with prioritized mitigations
 - Files that will be created/modified
 
 **Human decides:**
 
-- Is this the right approach?
+- Is the approach correct?
 - Are trade-offs acceptable?
-- Any concerns about the design?
+- Are security priorities right?
+- Ready to implement?
 
-**Output:** Approved architecture.md
+**Output:** Approved `triage.json` with disposition
 
-## Checkpoint: Hardening
+### REVIEW Checkpoint
 
-**Purpose:** Ensure security concerns are addressed in design.
+**When:** After implementation, before remediation
 
-**What's presented:**
-
-- Footguns identified in design
-- Security recommendations
-- Required mitigations for v1
-
-**Human decides:**
-
-- Are all critical issues addressed?
-- Any additional security requirements?
-- Acceptable to proceed with implementation?
-
-**Output:** Approved hardening-review.md
-
-## Checkpoint: Review
-
-**Purpose:** Decide how to handle findings from quality/security review.
+**Purpose:** Decide how to handle quality/security findings.
 
 **What's presented:**
 
-- Critical issues (bugs, security vulnerabilities)
-- Important suggestions (code quality, patterns)
+- Critical issues (bugs, vulnerabilities)
+- Important suggestions (code quality)
 - Test results and coverage
 - Variant analysis results (if applicable)
 
 **Human decides:**
 
 - Fix now (blocks release)
-- Fix later (tracked for next sprint)
-- Won't fix (documented decision)
+- Fix later (tracked)
+- Won't fix (documented)
 - Need more information
 
-**Output:** Updated findings.json with dispositions
+**Output:** Updated `findings.json` with dispositions
+
+### COMPLETION Checkpoint
+
+**When:** After Summary phase
+
+**Purpose:** Final acceptance of deliverable.
+
+**What's presented:**
+
+- Summary of what was built
+- Test results
+- Known issues and limitations
+- Handoff notes
+
+**Human decides:**
+
+- Accept as complete
+- Request revisions
+- Document for future work
+
+## State Tracking
+
+**state.json approvals section:**
+
+```json
+{
+  "group": "execution",
+  "approvals": {
+    "clarification": {
+      "approved": true,
+      "approved_at": "2026-01-22T10:30:00Z",
+      "notes": "Answered all questions"
+    },
+    "design_iteration_1": {
+      "approved": false,
+      "feedback": "Need to reconsider caching strategy",
+      "feedback_at": "2026-01-22T12:00:00Z"
+    },
+    "design_iteration_2": {
+      "approved": true,
+      "approved_at": "2026-01-22T14:00:00Z",
+      "notes": "Approved revised approach"
+    }
+  }
+}
+```
 
 ## Intervention Triggers
 
@@ -189,7 +197,7 @@ Agents should ask for help when:
   "intervention_requested": true,
   "reason": "Discovered conflicting requirements",
   "context": "Auth design requires both stateless JWT and server-side session for compliance",
-  "options": ["Option A: Hybrid approach with...", "Option B: Prioritize compliance with..."],
+  "options": ["Option A: Hybrid approach", "Option B: Prioritize compliance"],
   "recommendation": "Option B because..."
 }
 ```
@@ -203,35 +211,30 @@ Humans can intervene by:
 - Using `/cancel-ralph` to stop loops
 - Modifying state.json directly
 
-## Feedback Loop Patterns
+## Design Iteration Limit
 
-### Quick Feedback (Same Session)
-
-```
-Agent: "I found X. Should I proceed with Y or Z?"
-Human: "Proceed with Y"
-Agent: Continues with Y approach
-```
-
-### Checkpoint Feedback (Phase Transition)
+The DESIGN group allows **maximum 2 iterations**:
 
 ```
-Agent: Completes Architecture phase, presents summary
-Human: "Looks good, but also consider caching for the API"
-Agent: Updates architecture.md, re-presents for approval
-Human: "Approved"
-Agent: Proceeds to Hardening
+Iteration 1:
+  - Parallel specialists design
+  - Architect synthesizes
+  - Security review
+  - Present to human
+
+If feedback requires changes:
+
+Iteration 2:
+  - Incorporate feedback
+  - Re-run affected phases
+  - Present to human again
+
+If still not approved after iteration 2:
+  - Escalate to human for direction
+  - May need requirements revision
 ```
 
-### Intervention Feedback (Mid-Phase)
-
-```
-Agent: Working on implementation
-Human: "Stop. We need to change the API contract."
-Agent: Pauses, updates discovery.md, may need to revisit architecture
-```
-
-## Loop Iteration Checkpoints
+## Ralph Loop Checkpoints
 
 For Ralph loops (Implementation, Remediation), checkpoints occur:
 
@@ -242,8 +245,9 @@ For Ralph loops (Implementation, Remediation), checkpoints occur:
 
 **Max iterations as safety:**
 
-```bash
-/ralph-loop "..." --max-iterations 30
+```
+Implementation: --max-iterations 50
+Remediation: --max-iterations 30 (and max 2 remediation cycles)
 ```
 
 If limit reached without completion:
@@ -252,18 +256,18 @@ If limit reached without completion:
 - Human reviews progress
 - Decides: continue with more iterations / change approach / pause
 
-## Checkpoint Quality Gates
+## Quality Gates
 
 Each checkpoint can have quality gates that must pass:
 
-**Architecture checkpoint gates:**
+**Design checkpoint gates:**
 
-- [ ] Security requirements addressed
-- [ ] Performance requirements considered
-- [ ] Backward compatibility maintained
-- [ ] Testing strategy defined
+- [ ] All specialists provided input
+- [ ] Security review completed
+- [ ] Threat model enumerated
+- [ ] Trade-offs documented
 
-**Implementation checkpoint gates:**
+**Review checkpoint gates:**
 
 - [ ] All tests passing
 - [ ] Lint clean
@@ -315,21 +319,34 @@ Each checkpoint can have quality gates that must pass:
               └─────────┘    └─────────┘
 ```
 
-- **PENDING** — Phase not yet started
-- **RUNNING** — Phase in progress (agent working)
+- **PENDING** — Phase/group not yet started
+- **RUNNING** — Phase/group in progress (agents working)
 - **WAITING_APPROVAL** — Checkpoint reached, awaiting human
 - **APPROVED** — Human approved, can proceed
-- **COMPLETE** — Phase finished
+- **COMPLETE** — Phase/group finished
 - **BLOCKED** — Intervention needed, cannot proceed
+
+## Human as Orchestrating Architect
+
+The human is not a passive approver—they are the orchestrating architect:
+
+| Role                     | What It Means                                      |
+| ------------------------ | -------------------------------------------------- |
+| **Provides context**     | Business requirements AI cannot infer              |
+| **Makes trade-offs**     | Chooses between valid competing approaches         |
+| **Approves direction**   | Ensures work aligns with actual needs              |
+| **Intervenes on uncertainty** | Guides when AI encounters ambiguity           |
+| **Accepts or rejects**   | Final authority on deliverables                    |
+
+The workflow is designed for human stewardship, not full autonomy. AI executes; humans steer.
 
 ## Summary
 
 Human checkpoints transform Feature-Forge from an autonomous system into a collaborative one:
 
-- **Scheduled checkpoints** ensure quality at phase transitions
-- **Intervention triggers** allow course correction anytime
-- **Feedback loops** incorporate human judgment into AI execution
-- **Quality gates** enforce standards before proceeding
+- **Clarification** ensures understanding before design
+- **Design Triage** ensures good architecture before implementation
+- **Review** ensures quality before shipping
+- **Completion** ensures acceptance of deliverables
 
-The goal is not to slow down development but to ensure that AI-assisted development produces outcomes humans actually
-want.
+The goal is not to slow down development but to ensure AI-assisted development produces outcomes humans actually want.

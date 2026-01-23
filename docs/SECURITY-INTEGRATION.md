@@ -1,42 +1,35 @@
 # Security Integration
 
-## Trail of Bits Skills
+## Philosophy
 
-Feature-Forge integrates Trail of Bits security skills into the development workflow:
+Feature-Forge creates its own security skills **inspired by** Trail of Bits methodologies. We adapt their thinking patterns into skills that frame how our agents approach security work.
 
-| Skill                      | Phase        | Purpose                                        |
-| -------------------------- | ------------ | ---------------------------------------------- |
-| **audit-context-building** | Audit        | Deep context before vulnerability hunting      |
-| **sharp-edges**            | Hardening    | Identify footgun designs and insecure defaults |
-| **variant-analysis**       | Remediation  | Find similar bugs after initial discovery      |
-| **fix-review**             | Verification | Verify fixes address findings                  |
+**Key distinction:** We do NOT invoke Trail of Bits plugins. We create our own skills that embody similar methodologies.
+
+## Security Skills
+
+Feature-Forge includes five security-focused skills:
+
+| Skill                 | Inspired By                      | Purpose                                        |
+| --------------------- | -------------------------------- | ---------------------------------------------- |
+| **deep-context**      | ToB audit-context-building       | Ultra-granular analysis before vulnerability hunting |
+| **threat-model**      | STRIDE methodology               | Systematic threat enumeration                  |
+| **footgun-detection** | ToB sharp-edges                  | Identify dangerous defaults and API misuse     |
+| **variant-hunt**      | ToB variant-analysis             | Find similar bugs after initial discovery      |
+| **fix-verify**        | ToB fix-review                   | Verify fixes address root cause                |
 
 ## Skill Details
 
-### audit-context-building
+### deep-context
 
-**Purpose:** Build deep architectural context through ultra-granular code analysis BEFORE vulnerability hunting.
+**Methodology:** Build deep architectural context through ultra-granular code analysis BEFORE vulnerability hunting.
 
-**When to use:**
+**How to think:**
 
-- Deep comprehension needed before bug discovery
-- Bottom-up understanding vs high-level guessing
-- Reducing hallucinations and context loss
-- Preparing for security audit or threat modeling
-
-**What it does:**
-
-- Line-by-line / block-by-block analysis
-- First Principles, 5 Whys, 5 Hows at micro scale
-- Maps insights → functions → modules → entire system
-- Identifies invariants, assumptions, flows, reasoning hazards
-
-**NOT for:**
-
-- Vulnerability findings (context only)
-- Fix recommendations (context only)
-- Exploit reasoning (context only)
-- Severity/impact rating (context only)
+1. Analyze line-by-line / block-by-block
+2. Apply First Principles, 5 Whys, 5 Hows at micro scale
+3. Map insights → functions → modules → entire system
+4. Identify invariants, assumptions, flows, reasoning hazards
 
 **Output includes:**
 
@@ -46,35 +39,64 @@ Feature-Forge integrates Trail of Bits security skills into the development work
 - Assumption documentation
 - Invariant tracking
 
-### sharp-edges
+**NOT for:**
 
-**Purpose:** Identify error-prone APIs, dangerous configurations, and footgun designs that enable security mistakes.
+- Vulnerability findings (context only)
+- Fix recommendations (context only)
+- Exploit reasoning (context only)
+- Severity/impact rating (context only)
 
-**When to use:**
+### threat-model
 
-- Reviewing API designs
-- Evaluating configuration schemas
-- Assessing cryptographic library ergonomics
-- Checking "secure by default" and "pit of success" principles
+**Methodology:** STRIDE-based systematic threat enumeration.
 
-**What it identifies:**
+| Threat                     | Description                     | Key Question                 |
+| -------------------------- | ------------------------------- | ---------------------------- |
+| **S**poofing               | Impersonating something/someone | Can identity be faked?       |
+| **T**ampering              | Modifying data or code          | Can data be changed?         |
+| **R**epudiation            | Denying actions taken           | Can actions be traced?       |
+| **I**nformation Disclosure | Exposing protected information  | Can data leak?               |
+| **D**enial of Service      | Denying or degrading service    | Can service be disrupted?    |
+| **E**levation of Privilege | Gaining unauthorized access     | Can permissions be exceeded? |
 
-- APIs that make misuse easy
-- Dangerous default configurations
-- Missing guardrails
-- Footgun designs
-- Non-obvious failure modes
+**How to think:**
+
+1. Identify assets (what we're protecting)
+2. Map actors (who interacts with the system)
+3. Draw trust boundaries (where trust changes)
+4. For each boundary crossing, apply STRIDE
+5. Assess likelihood and impact
+6. Propose mitigations
+
+### footgun-detection
+
+**Methodology:** Identify error-prone APIs, dangerous configurations, and designs that enable security mistakes.
+
+**How to think:**
+
+1. Model the adversary (what mistakes could be made?)
+2. Probe edge cases (what happens with unexpected input?)
+3. Check defaults (are they secure by default?)
+4. Evaluate pit-of-success (is the safe path the easy path?)
 
 **Key questions:**
 
-- Is this misuse-resistant?
+- Is this API misuse-resistant?
 - Are defaults secure?
-- Does it follow pit-of-success principles?
 - Can users accidentally create vulnerabilities?
+- What happens if this is used wrong?
 
-### variant-analysis
+### variant-hunt
 
-**Purpose:** Find similar vulnerabilities across codebases using pattern-based analysis after finding an initial issue.
+**Methodology:** Find similar vulnerabilities after discovering an initial issue.
+
+**How to think:**
+
+1. Start specific (understand the exact bug)
+2. Generalize the pattern (what makes this vulnerable?)
+3. Build queries (CodeQL, Semgrep, grep patterns)
+4. Search codebase systematically
+5. Stop at 50% false positive rate (diminishing returns)
 
 **When to use:**
 
@@ -83,63 +105,69 @@ Feature-Forge integrates Trail of Bits security skills into the development work
 - When a CVE affects patterns in your code
 - During systematic security sweeps
 
-**What it does:**
+### fix-verify
 
-- Builds queries (CodeQL/Semgrep) from initial finding
-- Searches for similar patterns across codebase
-- Identifies related code paths
-- Maps vulnerability patterns
+**Methodology:** Verify that fixes actually address security findings without introducing regressions.
 
-**Triggers:**
+**How to think:**
 
-- "I found an XSS here, find similar issues"
-- "Search for other places where user input reaches SQL"
-- "After fixing this bug, check for variants"
+1. Understand the original vulnerability (root cause)
+2. Analyze the fix (what changed?)
+3. Verify root cause addressed (not just symptoms)
+4. Check for regressions (did fix break anything?)
+5. Look for incomplete fixes (all variants covered?)
 
-### fix-review
+**Differential analysis:**
 
-**Purpose:** Verify that git commits actually address security audit findings without introducing new bugs or
-regressions.
+- Compare before/after behavior
+- Test original exploit vector
+- Check related code paths
+- Verify test coverage of fix
 
-**When to use:**
+## Skills Applied to Phases
 
-- After implementing fixes for audit findings
-- Before merging security-related PRs
-- During post-audit remediation review
+Security skills are used at multiple points in the workflow:
 
-**What it does:**
+### UNDERSTANDING Group
 
-- Compares fix implementation against vulnerability report
-- Verifies the fix addresses root cause
-- Checks for introduced regressions
-- Validates completeness of remediation
+**Security Context Phase:**
+- security-analyst uses **deep-context** to build trust boundaries and attack surfaces
+- Produces `security-context.md`
 
-**Triggers:**
+### DESIGN Group
 
-- "Verify commits on branch fix/auth-bypass address TOB-003"
-- "Check if last 3 commits remediate SQL injection finding"
-- "Review the fix branch against the audit report"
+**Architecture Phase:**
+- All design specialists consider security in their domain
+- security-analyst available for consultation
 
-## Integration into Feature-Forge Phases
+**Security Review Phase:**
+- security-analyst uses **footgun-detection** to review architecture
+- Identifies dangerous defaults, API misuse potential
+- Produces `hardening-review.md`
 
-### Audit Phase
+**Triage Phase:**
+- security-analyst uses **threat-model** to enumerate threats
+- architect + security-analyst prioritize for v1
+- Produces `triage.json`
 
-```
-1. Read exploration.md (understand codebase first)
-2. Invoke audit-context-building methodology
-3. Perform ultra-granular analysis:
-   - Trust boundaries
-   - Attack surfaces
-   - Data flows
-   - Invariants and assumptions
-4. Write to audit-context.md
-```
+### EXECUTION Group
 
-**Output structure:**
+**Review Phase:**
+- reviewer (security) uses **deep-context** for thorough analysis
+- Contributes to `findings.json`
+
+**Remediation Phase:**
+- remediator uses **variant-hunt** to find related issues
+- remediator uses **fix-verify** to validate fixes
+- Updates `findings.json` with verification status
+
+## Security Context Output
+
+The Security Context phase produces `security-context.md`:
 
 ```markdown
 ---
-phase: audit
+phase: security-context
 status: complete
 trust_boundaries: 5
 attack_surfaces: 8
@@ -150,7 +178,7 @@ critical_assumptions: 3
 
 ## Trust Boundaries
 
-[Detailed analysis]
+[Where trust changes in the system]
 
 ## Attack Surfaces
 
@@ -158,36 +186,29 @@ critical_assumptions: 3
 
 ## Data Flows
 
-[Sensitive data movement]
+[Sensitive data movement through the system]
 
 ## Invariants & Assumptions
 
-[What must remain true]
+[What must remain true for security]
+
+## Reasoning Hazards
+
+[Non-obvious security implications]
 ```
 
-### Hardening Phase
+## Hardening Review Output
 
-```
-1. Read architecture.md (understand design)
-2. Read audit-context.md (security context)
-3. Invoke sharp-edges methodology
-4. Analyze for:
-   - API footguns
-   - Insecure defaults
-   - Missing guardrails
-   - Misuse potential
-5. Write to hardening-review.md
-```
-
-**Output structure:**
+The Security Review phase produces `hardening-review.md`:
 
 ```markdown
 ---
 phase: hardening
 status: complete
-footguns_identified: 3
+issues_identified: 5
 severity_high: 1
-severity_medium: 2
+severity_medium: 3
+severity_low: 1
 ---
 
 # Hardening Review
@@ -196,101 +217,33 @@ severity_medium: 2
 
 [Must fix before implementation]
 
-## Recommendations
+### Issue 1: [Title]
+- **Risk:** [What could go wrong]
+- **Recommendation:** [How to fix]
 
-[Should fix, prioritized]
+## Medium Priority
+
+[Should fix, prioritized by risk]
+
+## Low Priority
+
+[Nice to have, can defer]
 
 ## Accepted Risks
 
-[Documented decisions to accept]
-```
-
-### Remediation Phase (Variant Hunt)
-
-```
-1. Read findings.json from Review phase
-2. For issues that may have variants:
-   - Invoke variant-analysis
-   - Search for similar patterns
-   - Add variants to findings.json
-3. Prioritize all findings
-4. Fix iteratively
-```
-
-### Verification (Fix Review)
-
-```
-1. After fixes implemented
-2. Invoke fix-review methodology
-3. Compare commits against original findings
-4. Verify:
-   - Root cause addressed
-   - No new issues introduced
-   - Complete remediation
-5. Update findings.json with verification status
-```
-
-## STRIDE Threat Modeling
-
-The Threat phase uses STRIDE methodology:
-
-| Threat                     | Description                     | Questions                    |
-| -------------------------- | ------------------------------- | ---------------------------- |
-| **S**poofing               | Impersonating something/someone | Can identity be faked?       |
-| **T**ampering              | Modifying data or code          | Can data be changed?         |
-| **R**epudiation            | Denying actions taken           | Can actions be traced?       |
-| **I**nformation Disclosure | Exposing protected information  | Can data leak?               |
-| **D**enial of Service      | Denying or degrading service    | Can service be disrupted?    |
-| **E**levation of Privilege | Gaining unauthorized access     | Can permissions be exceeded? |
-
-**Threat model output:**
-
-```markdown
----
-phase: threat
-status: complete
-threats_identified: 12
-mitigations_required: 8
----
-
-# Threat Model
-
-## Assets
-
-[What we're protecting]
-
-## Actors
-
-[Who interacts with the system]
-
-## Trust Boundaries
-
-[Where trust changes]
-
-## Threats by STRIDE
-
-### Spoofing
-
-- Threat: [description]
-  - Likelihood: [H/M/L]
-  - Impact: [H/M/L]
-  - Mitigation: [required action]
-
-### Tampering
-
-...
+[Documented decisions to accept certain risks]
 ```
 
 ## Triage Output
 
-The Triage phase prioritizes security requirements:
+The Triage phase produces `triage.json`:
 
 ```json
 {
   "v1_requirements": [
     {
       "id": "SEC-001",
-      "threat": "spoofing",
+      "threat_category": "spoofing",
       "description": "Implement JWT validation",
       "priority": 1,
       "source": "threat-model"
@@ -314,73 +267,80 @@ The Triage phase prioritizes security requirements:
 }
 ```
 
-## Composing Skills
+## Findings and Verification
 
-Feature-Forge skills **wrap** Trail of Bits skills, adding:
+Review produces `findings.json`, which is updated during remediation:
 
-1. **Context file reading** — Read prior phase outputs
-2. **Output file writing** — Write to Feature-Forge workspace
-3. **State updates** — Update state.json and progress.json
-
-**Example wrapper skill:**
-
-```yaml
----
-name: audit-context
-description: "Build security context for Feature-Forge. Wraps ToB audit-context-building."
----
-
-# Audit Context (Feature-Forge)
-
-## Pre-Execution
-1. Read .claude/feature-forge/exploration.md
-2. Read .claude/feature-forge/discovery.md
-
-## Execution
-Apply Trail of Bits audit-context-building methodology:
-- Ultra-granular analysis
-- Trust boundaries, attack surfaces
-- Invariants and assumptions
-
-## Post-Execution
-1. Write to .claude/feature-forge/audit-context.md
-2. Update state.json: phase=audit, status=complete
-3. Update progress.json with session notes
+```json
+{
+  "findings": [
+    {
+      "id": "FIND-001",
+      "type": "security",
+      "severity": "high",
+      "description": "SQL injection in user search",
+      "location": "src/api/users.ts:42",
+      "status": "fixed",
+      "fix_commit": "abc123",
+      "verification": {
+        "root_cause_addressed": true,
+        "regression_check": "pass",
+        "variants_checked": true,
+        "verified_by": "remediator",
+        "verified_at": "2026-01-22T16:00:00Z"
+      }
+    }
+  ]
+}
 ```
 
 ## Security Workflow Summary
 
 ```
-AUDIT (audit-context-building)
+UNDERSTANDING
     │
-    ▼
-THREAT (STRIDE methodology)
+    └── security-analyst (deep-context)
+            │
+            ▼
+        security-context.md
+
+DESIGN
     │
-    ▼
-TRIAGE (prioritize for v1)
-    │ [HUMAN CHECKPOINT]
-    ▼
-ARCHITECTURE (design)
+    ├── specialists (consider security in domain)
     │
-    ▼
-HARDENING (sharp-edges)
-    │ [HUMAN CHECKPOINT]
-    ▼
-IMPLEMENTATION
+    ├── security-analyst (footgun-detection)
+    │       │
+    │       ▼
+    │   hardening-review.md
     │
-    ▼
-REVIEW
+    └── security-analyst + architect (threat-model)
+            │
+            ▼
+        triage.json [HUMAN CHECKPOINT]
+
+EXECUTION
     │
-    ├── issues found ──► VARIANTS (variant-analysis)
-    │                        │
-    │                        ▼
-    │                   REMEDIATION
-    │                        │
-    │                        ▼
-    │                   VERIFICATION (fix-review)
-    │                        │
-    └── clean ◄──────────────┘
+    ├── reviewer/security (deep-context)
+    │       │
+    │       ▼
+    │   findings.json
     │
-    ▼
-SUMMARY
+    └── remediator (variant-hunt, fix-verify)
+            │
+            ▼
+        findings.json (with verification)
 ```
+
+## Reusability of Security Skills
+
+A key design principle: security skills are **reusable tools**, not one-time phases.
+
+| Skill             | Used In                                          |
+| ----------------- | ------------------------------------------------ |
+| deep-context      | Security Context, Review, any deep analysis      |
+| threat-model      | Triage, whenever threats need enumeration        |
+| footgun-detection | Security Review, API design review               |
+| variant-hunt      | Remediation, after any bug discovery             |
+| fix-verify        | Remediation, after any fix implementation        |
+
+This means the security-analyst agent can apply these skills whenever the orchestrator determines they're needed, not just at predetermined phases.

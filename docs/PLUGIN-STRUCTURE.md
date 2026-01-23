@@ -31,7 +31,10 @@ feature-forge/
 │
 ├── hooks/                       # Event handlers
 │   ├── hooks.json               # Hook configuration
-│   └── ralph-stop-hook.sh       # Implementation/remediation loops
+│   └── scripts/
+│       ├── session-start.sh     # Load state on session start
+│       ├── stop-check.sh        # Ralph loop for implementation/remediation
+│       └── precompact-persist.sh # Persist state before compaction
 │
 └── README.md
 ```
@@ -322,8 +325,9 @@ Hooks are event-driven automation scripts that execute in response to Claude Cod
 | --------------- | ----------------------------- | ------------------------------------------------ |
 | **SessionStart**| Session begins                | Load state.json, identify current phase, resume  |
 | **Stop**        | Agent wants to stop           | Ralph loops: check completion, feed back prompt  |
-| **SubagentStop**| Subagent completes            | Process agent results, update state              |
 | **PreCompact**  | Before context compaction     | **Critical:** Persist state before tokens cleared |
+
+**Note:** SubagentStop is not used—the orchestrator handles state updates inline after each agent returns.
 
 ### SessionStart Hook
 
@@ -360,18 +364,6 @@ Hooks are event-driven automation scripts that execute in response to Claude Cod
 ```
 
 **Max iterations:** Safety limit to prevent infinite loops (e.g., 50 for implementation, 30 for remediation).
-
-### SubagentStop Hook
-
-**Purpose:** Process results when agents complete their work.
-
-**Behavior:**
-1. Subagent completes work
-2. Hook captures agent output
-3. Updates state.json with agent results
-4. Orchestrator can read results and proceed
-
-**Why needed:** Orchestrator needs to know when parallel agents finish and collect their outputs.
 
 ### PreCompact Hook (Critical for Session Continuity)
 
@@ -463,7 +455,7 @@ Feature-Forge hooks will likely be **prompt-based** (LLM-driven) for complex log
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/session-start.sh",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/session-start.sh",
             "timeout": 10
           }
         ]
@@ -541,14 +533,15 @@ feature-forge/
 │
 ├── hooks/
 │   ├── hooks.json                 # Hook configuration
-│   ├── session-start.sh           # Load state on session start
-│   ├── stop-check.sh              # Ralph loop completion check
-│   └── precompact-persist.sh      # Persist state before compaction
+│   └── scripts/
+│       ├── session-start.sh       # Load state on session start
+│       ├── stop-check.sh          # Ralph loop completion check
+│       └── precompact-persist.sh  # Persist state before compaction
 │
 ├── scripts/
 │   ├── init-workspace.sh          # Creates .claude/feature-forge/
-│   ├── state-manager.py           # JSON state operations
-│   └── progress-tracker.py        # Session handoffs
+│   ├── state-manager.sh           # JSON state operations (bash + jq)
+│   └── progress-tracker.sh        # Session handoffs (bash + jq)
 │
 └── README.md
 ```

@@ -157,7 +157,6 @@ Hooks are event-driven automation that enables baton passing and Ralph loops.
 | --------------- | ----------------------------- | ------------------------------------------------ |
 | **SessionStart**| Session begins                | Load state.json, identify current phase          |
 | **Stop**        | Agent wants to stop           | Ralph loops: check completion, feed back prompt  |
-| **SubagentStop**| Subagent completes            | Process agent results, update state              |
 | **PreCompact**  | Before context compaction     | **Critical:** Persist state before tokens cleared |
 | **PreToolUse**  | Before tool executes          | Validate dangerous operations if needed          |
 
@@ -247,11 +246,8 @@ SESSION START
       ▼
 UNDERSTANDING / DESIGN phases (linear)
       │
-      ▼
-┌─────────────────┐
-│ SubagentStop    │──► When agents complete, process results
-│ hook            │    Update state with agent outputs
-└─────────────────┘
+      │  Orchestrator spawns agents, receives results inline
+      │  Updates state.json after each agent completes
       │
       ▼
 IMPLEMENTATION (Ralph loop)

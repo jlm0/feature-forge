@@ -101,7 +101,7 @@ Wait for approval
 | **Blocking**    | Pauses current agent             | Stops all progress              |
 | **Output**      | Answer incorporated, work continues | Approval or iteration request |
 
-## Skills (17 Total)
+## Skills (18 Total)
 
 Skills are methodologies pre-loaded into agents to frame their thinking.
 

@@ -144,9 +144,9 @@ multiple-choice options rather than requiring the user to type responses.
       "header": "Auth method",
       "multiSelect": false,
       "options": [
-        {"label": "JWT tokens (Recommended)", "description": "Stateless, works well with mobile apps and microservices"},
-        {"label": "Session cookies", "description": "Traditional approach, requires session store"},
-        {"label": "OAuth only", "description": "Delegate auth entirely to external provider"}
+        {"label": "JWT tokens (Recommended)", "description": "Stateless auth, scales horizontally without session store. Tokens stored client-side, supports mobile/SPA. Tradeoff: harder to revoke tokens immediately."},
+        {"label": "Session cookies", "description": "Server-side sessions with HTTP-only cookies. Simpler revocation but requires session store (Redis/DB) and may need sticky sessions for scaling."},
+        {"label": "OAuth only", "description": "Delegate auth to Google/GitHub/etc. No password management but depends on external provider availability. Users must have provider account."}
       ]
     }
   ]
@@ -178,7 +178,16 @@ wasted exploration.
 
 The AskUserQuestion tool requires 2-4 options per question. Each option needs:
 - `label`: Short display text (1-5 words)
-- `description`: Explanation of what this choice means
+- `description`: **CRITICAL** - Provide enough context for informed decision-making. Explain implications, trade-offs,
+  and consequences. Users need to understand what they're choosing, not just the option name.
+
+**Good descriptions:**
+- "Stateless authentication, scales horizontally, requires client-side token storage"
+- "Traditional sessions, simpler implementation, requires session store and sticky sessions"
+
+**Bad descriptions:**
+- "Use JWT" (no context)
+- "The standard approach" (doesn't explain implications)
 
 The user can always select "Other" to provide custom input, so don't include an "Other" option manually.
 

@@ -91,9 +91,9 @@ Phase outputs:
          "header": "Scope",
          "multiSelect": false,
          "options": [
-           {"label": "Minimal (Recommended)", "description": "Core functionality only"},
-           {"label": "Full feature", "description": "All described functionality"},
-           {"label": "MVP first", "description": "Start minimal, iterate"}
+           {"label": "Minimal (Recommended)", "description": "Core functionality only. Fastest path to working feature, reduces risk of scope creep. Can iterate later."},
+           {"label": "Full feature", "description": "All described functionality in first pass. Higher effort but complete solution. Risk of over-engineering."},
+           {"label": "MVP first", "description": "Start with minimal core, plan explicit iteration cycles. Good for uncertain requirements."}
          ]
        },
        {
@@ -101,8 +101,8 @@ Phase outputs:
          "header": "Auth",
          "multiSelect": false,
          "options": [
-           {"label": "JWT tokens (Recommended)", "description": "Stateless, good for APIs"},
-           {"label": "Session cookies", "description": "Traditional server-side sessions"}
+           {"label": "JWT tokens (Recommended)", "description": "Stateless, scales horizontally, good for APIs and SPAs. Tradeoff: harder token revocation."},
+           {"label": "Session cookies", "description": "Traditional server-side sessions. Easier revocation but requires session store (Redis/DB)."}
          ]
        }
      ]

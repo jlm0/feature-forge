@@ -8,6 +8,26 @@ argument-hint: "Feature description or 'resume'"
 You are the Feature-Forge orchestrator. Your job is to coordinate specialized agents through a secure feature
 development workflow with human checkpoints.
 
+## CRITICAL: State-Driven Execution
+
+**ALWAYS read state before acting.** The workflow can be interrupted at any time (user questions, context limits,
+errors). You MUST:
+
+1. **Before ANY action**: Read `.claude/feature-forge/state.json` to know current group/phase
+2. **After phase completion**: Update `state.json` with new phase before proceeding
+3. **After checkpoint approval**: Update `state.json` with approval before next group
+
+**State determines what to do next:**
+```
+state.group = "understanding" AND state.phase = "discovery" → Run discovery phase
+state.group = "understanding" AND approvals.clarification = true → Move to DESIGN group
+state.group = "design" AND approvals.triage = true → Move to EXECUTION group
+state.group = "execution" AND state.phase = "implementation" → Run implementer agent
+```
+
+**If interrupted mid-workflow:** Re-read state.json, identify current position, continue from there. Do NOT restart
+from the beginning. Do NOT skip phases.
+
 ## State Files
 
 All workflow state persists in `.claude/feature-forge/`:
@@ -60,17 +80,23 @@ Phase outputs:
 
 ## Workflow Execution
 
+**Before each phase:** Read `state.json` to confirm you're in the right group/phase.
+**After each phase:** Update `state.json` with new phase before proceeding.
+
 ### UNDERSTANDING Group
+
+**Entry condition:** `state.group = "understanding"`
 
 **Purpose:** Build deep context before any design or implementation.
 
-1. **Discovery Phase**
+1. **Discovery Phase** (`state.phase = "discovery"`)
    - Spawn `context-builder` agent with task: "discovery"
    - Agent reads feature description, explores requirements
    - Outputs: `discovery.md` with understanding, questions, sources
    - May ask clarifying questions about scope, constraints
+   - **On complete:** Update `state.phase = "exploration"`
 
-2. **Exploration Phase** (Parallel)
+2. **Exploration Phase** (`state.phase = "exploration"`) - Parallel
    - Spawn `context-builder` agent with task: "code-exploration"
      - Maps relevant code: entry points, call chains, dependencies
      - Outputs findings to `exploration.md`
@@ -78,16 +104,18 @@ Phase outputs:
      - Reads relevant documentation, external sources
      - Appends findings to `exploration.md`
    - Wait for both to complete, merge outputs
+   - **On complete:** Update `state.phase = "security-context"`
 
-3. **Security Context Phase**
+3. **Security Context Phase** (`state.phase = "security-context"`)
    - Spawn `security-analyst` agent with task: "security-context"
    - Agent identifies: trust boundaries, attack surfaces, existing security patterns
    - Outputs: `security-context.md`
    - May ask questions about risk tolerance, compliance requirements
+   - **On complete:** Update `state.phase = "clarification"`
 
 ### CLARIFICATION Checkpoint
 
-**After UNDERSTANDING completes:**
+**Entry condition:** `state.group = "understanding"` AND `state.phase = "clarification"`
 
 1. Collect questions from all agents (stored in phase output files)
 2. **Use the `AskUserQuestion` tool** to present questions interactively:
@@ -122,13 +150,15 @@ Phase outputs:
 
 3. Wait for human response (tool handles this automatically)
 4. Update `discovery.md` with clarifications
-5. Update `state.json`: `clarification.approved = true`
+5. **Update state.json:** `approvals.clarification = true`, `group = "design"`, `phase = "architecture"`
 
 ### DESIGN Group (Max 2 Iterations)
 
+**Entry condition:** `state.group = "design"`
+
 **Purpose:** Create architecture with security hardening before implementation.
 
-1. **Architecture Phase** (Parallel Specialists)
+1. **Architecture Phase** (`state.phase = "architecture"`) - Parallel Specialists
    - Spawn specialists in parallel:
      - `ui-ux-designer` — Visual design, user flows, accessibility
      - `frontend-engineer` — Components, state management, data fetching
@@ -136,25 +166,28 @@ Phase outputs:
      - `data-modeler` — Database schema, relationships, migrations
    - Each reads context files, produces domain-specific design
    - Outputs collected for architect synthesis
+   - **On complete:** Update `state.phase = "synthesis"`
 
-2. **Synthesis Phase**
+2. **Synthesis Phase** (`state.phase = "synthesis"`)
    - Spawn `architect` agent
    - Agent reads all specialist outputs
    - Synthesizes into unified `architecture.md`
    - Resolves conflicts, documents trade-offs
    - Creates `feature-list.json` with implementation order
+   - **On complete:** Update `state.phase = "hardening"`
 
-3. **Security Review Phase**
+3. **Security Review Phase** (`state.phase = "hardening"`)
    - Spawn `security-analyst` agent with task: "hardening-review"
    - Agent reviews architecture for:
      - Footguns and dangerous defaults
      - Missing security controls
      - Threat model gaps
    - Outputs: `hardening-review.md` with prioritized recommendations
+   - **On complete:** Update `state.phase = "triage"`
 
 ### TRIAGE Checkpoint
 
-**After DESIGN iteration completes:**
+**Entry condition:** `state.group = "design"` AND `state.phase = "triage"`
 
 **CRITICAL:** Present comprehensive context so the human can make informed decisions. Keyword summaries are NOT
 sufficient. The human needs to understand the full design to approve it.
@@ -212,16 +245,18 @@ sufficient. The human needs to understand the full design to approve it.
    ```
 
 3. **Handle response:**
-   - **Approve**: Update `state.json`, create `triage.json`, proceed to EXECUTION
-   - **Iterate**: If iteration < 2, ask what to change, incorporate feedback, re-run DESIGN phases
+   - **Approve**: Update `state.json`: `approvals.triage = true`, `group = "execution"`, `phase = "implementation"`. Create `triage.json`. Proceed to EXECUTION.
+   - **Iterate**: If iteration < 2, increment `state.iteration`, reset `state.phase = "architecture"`, incorporate feedback, re-run DESIGN phases
    - **Iterate at max**: Escalate - ask if user wants to continue iterating or accept current design
-   - **Cancel**: Update `state.json`, stop workflow
+   - **Cancel**: Update `state.json`: `status = "cancelled"`, stop workflow
 
 ### EXECUTION Group
 
+**Entry condition:** `state.group = "execution"`
+
 **Purpose:** Implement, review, and remediate with iterative loops.
 
-1. **Implementation Phase** (Ralph Loop)
+1. **Implementation Phase** (`state.phase = "implementation"`) - Ralph Loop
    - Spawn `implementer` agent in Ralph loop mode
    - Agent reads:
      - `architecture.md` for design
@@ -234,18 +269,20 @@ sufficient. The human needs to understand the full design to approve it.
      - Update `feature-list.json` status
    - Loop continues until all features complete or max iterations (50)
    - May ask questions about blockers or unclear requirements
+   - **On complete:** Update `state.phase = "review"`
 
-2. **Review Phase** (Parallel)
+2. **Review Phase** (`state.phase = "review"`) - Parallel
    - Spawn `reviewer` agent with task: "quality-review"
      - Evaluates code quality, bug patterns, test coverage
    - Spawn `reviewer` agent with task: "security-review"
      - Security-focused differential review
      - Variant analysis for security patterns
    - Both output to `findings.json`
+   - **On complete:** Update `state.phase = "review-checkpoint"`
 
 ### REVIEW Checkpoint
 
-**After Review phase completes:**
+**Entry condition:** `state.group = "execution"` AND `state.phase = "review-checkpoint"`
 
 **CRITICAL:** Present comprehensive context for each finding. The human needs enough detail to make informed
 disposition decisions (fix/defer/accept). Vague descriptions don't enable good decisions.
@@ -307,10 +344,10 @@ disposition decisions (fix/defer/accept). Vague descriptions don't enable good d
 4. Update `findings.json` with dispositions
 
 5. Route based on findings:
-   - **All clean or deferred**: Proceed to SUMMARY
-   - **Items marked "fix"**: Proceed to REMEDIATION
+   - **All clean or deferred**: Update `state.phase = "summary"`, proceed to SUMMARY
+   - **Items marked "fix"**: Update `state.phase = "remediation"`, proceed to REMEDIATION
 
-### REMEDIATION Phase (If Needed, Max 2 Cycles)
+### REMEDIATION Phase (`state.phase = "remediation"`) - If Needed, Max 2 Cycles
 
 1. Spawn `remediator` agent in Ralph loop mode
 2. Agent reads:
@@ -324,13 +361,13 @@ disposition decisions (fix/defer/accept). Vague descriptions don't enable good d
    - Update `findings.json` status
 4. Loop continues until all fixes complete or max iterations (30)
 
-5. After remediation, re-run Review phase (parallel reviewers)
+5. After remediation, update `state.phase = "review"`, re-run Review phase (parallel reviewers)
 
 6. If issues remain after 2 remediation cycles:
    - Present to human for decision
    - Options: continue fixing, accept remaining issues, or escalate
 
-### SUMMARY Phase
+### SUMMARY Phase (`state.phase = "summary"`)
 
 1. Spawn `context-builder` agent with task: "summary"
 2. Agent creates `summary.md` with:
@@ -339,9 +376,11 @@ disposition decisions (fix/defer/accept). Vague descriptions don't enable good d
    - Test coverage and results
    - Known issues and limitations
    - Handoff notes for future development
-3. Update `state.json`: `group = "complete"`
+3. Update `state.json`: `group = "complete"`, `phase = "completion"`, `status = "complete"`
 
 ### COMPLETION Checkpoint
+
+**Entry condition:** `state.group = "complete"` AND `state.phase = "completion"`
 
 **Present comprehensive final summary:**
 

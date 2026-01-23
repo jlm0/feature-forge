@@ -156,33 +156,66 @@ Phase outputs:
 
 **After DESIGN iteration completes:**
 
-1. Present to human:
+**CRITICAL:** Present comprehensive context so the human can make informed decisions. Keyword summaries are NOT
+sufficient. The human needs to understand the full design to approve it.
 
+1. **Present full architecture context:**
+
+   **Component Overview:**
+   - List each component/module being added or modified
+   - For each: purpose, responsibilities, dependencies
+   - How components interact (data flow, API calls, events)
+
+   **Data Flow:**
+   - How data enters the system (user input, API calls, etc.)
+   - Transformations and validations at each step
+   - Where data is stored and how it's accessed
+   - How data exits (responses, side effects)
+
+   **Security Architecture:**
+   - Trust boundaries identified and how they're enforced
+   - Authentication/authorization approach and where checks occur
+   - Input validation strategy (what, where, how)
+   - How each threat from threat model is mitigated
+   - Security controls from hardening review and their placement
+
+   **Change Scope (be specific):**
+   - NEW files to create: full paths and purpose
+   - EXISTING files to modify: what changes and why
+   - Dependencies being added: packages, services, APIs
+   - Configuration changes: env vars, settings, permissions
+   - Database changes: new tables, columns, migrations
+
+   **Impact Analysis:**
+   - What existing functionality could be affected
+   - Integration points with current code
+   - Potential breaking changes
+   - Areas explicitly NOT being touched (boundaries)
+
+2. **Use `AskUserQuestion` for approval:**
+
+   ```json
+   {
+     "questions": [
+       {
+         "question": "Do you approve this architecture design for implementation?",
+         "header": "Approval",
+         "multiSelect": false,
+         "options": [
+           {"label": "Approve", "description": "Architecture is sound, security controls are appropriate, change scope is acceptable. Proceed to implementation."},
+           {"label": "Iterate", "description": "Need changes to the design. Will provide specific feedback for another design iteration."},
+           {"label": "Cancel", "description": "Stop the workflow entirely. Feature will not be implemented."}
+         ]
+       }
+     ]
+   }
    ```
-   DESIGN REVIEW (Iteration N/2)
 
-   Architecture Summary:
-   [Key points from architecture.md]
-
-   Security Findings:
-   [Critical items from hardening-review.md]
-
-   Files to Create/Modify:
-   [List from feature-list.json]
-
-   Options:
-   - approve: Proceed to implementation
-   - iterate: Request changes (describe what to change)
-   - cancel: Stop workflow
-   ```
-
-2. Wait for human response
-
-3. Handle response:
-   - **approve**: Update `state.json`, create `triage.json`, proceed to EXECUTION
-   - **iterate**: If iteration < 2, incorporate feedback, re-run DESIGN phases
-   - **iterate at max**: Escalate to human for direction
-   - **cancel**: Update `state.json`, stop workflow
+3. **Handle response:**
+   - **Approve**: Update `state.json`, create `triage.json`, proceed to EXECUTION
+   - **Iterate**: If iteration < 2, ask what to change, incorporate feedback, re-run DESIGN phases
+   - **Iterate at max**: Escalate - ask if user wants to continue iterating or accept current design
+   - **Cancel**: Update `state.json`, stop workflow
 
 ### EXECUTION Group
 
@@ -214,34 +247,66 @@ Phase outputs:
 
 **After Review phase completes:**
 
-1. Present findings to human:
+**CRITICAL:** Present comprehensive context for each finding. The human needs enough detail to make informed
+disposition decisions (fix/defer/accept). Vague descriptions don't enable good decisions.
 
+1. **Present implementation summary:**
+
+   **What Was Built:**
+   - List each feature implemented with status
+   - Files created: full paths
+   - Files modified: what changed
+   - Tests added: what they cover
+
+   **Commits Made:**
+   - List commits with messages
+   - Show `git log --oneline` for the feature branch
+
+2. **Present each finding with full context:**
+
+   For EACH quality finding:
+   - **Location**: Exact file and line number
+   - **Issue**: What the problem is (specific, not vague)
+   - **Impact**: What could go wrong if not fixed
+   - **Suggested Fix**: How to address it
+   - **Severity**: Critical/High/Medium/Low with justification
+
+   For EACH security finding:
+   - **Location**: Exact file and line number
+   - **Vulnerability**: What the security issue is
+   - **Attack Scenario**: How an attacker could exploit this
+   - **Impact**: What damage could result (data leak, privilege escalation, etc.)
+   - **Suggested Fix**: Specific remediation approach
+   - **Severity**: Critical/High/Medium/Low with justification
+
+   **Test Results:**
+   - Which tests passed/failed
+   - Coverage summary if available
+   - Any tests that should exist but don't
+
+3. **Use `AskUserQuestion` for disposition of each finding:**
+
+   For each finding, present options with context:
+   ```json
+   {
+     "questions": [
+       {
+         "question": "How should we handle: [FINDING TITLE]?",
+         "header": "Finding 1",
+         "multiSelect": false,
+         "options": [
+           {"label": "Fix (Recommended)", "description": "Address in remediation phase. Blocks release until resolved."},
+           {"label": "Defer", "description": "Track for future fix. Does not block release but adds to tech debt."},
+           {"label": "Accept Risk", "description": "Won't fix. Document the accepted risk and rationale."}
+         ]
+       }
+     ]
+   }
    ```
-   REVIEW CHECKPOINT
 
-   Implementation Complete:
-   [Features from feature-list.json]
+4. Update `findings.json` with dispositions
 
-   Quality Findings:
-   [Items from findings.json with severity]
-
-   Security Findings:
-   [Items from findings.json with severity]
-
-   Test Results:
-   [Summary of test runs]
-
-   Options for each finding:
-   - fix: Address in remediation (blocks release)
-   - defer: Track for later (does not block)
-   - wontfix: Accept risk (documented)
-   ```
-
-2. Wait for human disposition of findings
-
-3. Update `findings.json` with dispositions
-
-4. Route based on findings:
+5. Route based on findings:
    - **All clean or deferred**: Proceed to SUMMARY
    - **Items marked "fix"**: Proceed to REMEDIATION
 
@@ -278,24 +343,51 @@ Phase outputs:
 
 ### COMPLETION Checkpoint
 
-Present final summary to human:
+**Present comprehensive final summary:**
 
-```
-FEATURE COMPLETE
+1. **What Was Built:**
+   - Feature description and scope delivered
+   - Key architectural decisions made and rationale
+   - How security requirements were addressed
 
-Summary:
-[Content from summary.md]
+2. **Deliverables (be specific):**
+   - NEW files created: full paths with brief description of each
+   - MODIFIED files: what changed in each
+   - Full commit list: `git log --oneline <base>..HEAD`
+   - Branch name ready for PR
 
-Deliverables:
-- [List of files created/modified]
-- [Commits made]
+3. **Test Coverage:**
+   - Tests added and what they verify
+   - Test results summary
+   - Any gaps in coverage (documented)
 
-Known Issues:
-- [Deferred items from findings.json]
+4. **Known Issues & Accepted Risks:**
+   - Deferred findings with rationale
+   - Accepted risks with documentation
+   - Technical debt incurred
 
-Next Steps:
-- [Recommendations for follow-up work]
-```
+5. **Next Steps:**
+   - Recommended follow-up work
+   - Integration notes (if feature needs activation)
+   - Documentation updates needed
+
+6. **Use `AskUserQuestion` for final acceptance:**
+
+   ```json
+   {
+     "questions": [
+       {
+         "question": "Do you accept this feature as complete?",
+         "header": "Accept",
+         "multiSelect": false,
+         "options": [
+           {"label": "Accept", "description": "Feature is complete and ready for PR/merge. Workflow ends successfully."},
+           {"label": "Request Changes", "description": "Need additional work before accepting. Provide specific feedback."}
+         ]
+       }
+     ]
+   }
+   ```
 
 ## Error Handling
 

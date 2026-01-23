@@ -50,7 +50,7 @@ EXECUTION (Ralph Loops)
 
 ## Agents and Skills
 
-Feature-Forge uses **10 specialized agents** with **16 pre-loaded skills**:
+Feature-Forge uses **10 specialized agents** with **18 pre-loaded skills**:
 
 | Agent            | Role                    | Key Skills                                    |
 | ---------------- | ----------------------- | --------------------------------------------- |

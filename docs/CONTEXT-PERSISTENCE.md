@@ -92,6 +92,202 @@ approved_at: 2026-01-22T14:30:00Z
 We're implementing a layered architecture...
 ```
 
+## Baton Passing: The Core Pattern
+
+Feature-Forge is designed around **baton passing** — agents and sessions hand off work via file-based state.
+
+### Why Baton Passing Matters
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     WITHOUT BATON PASSING                                │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  Session 1         Session 2         Session 3                          │
+│  ┌──────────┐      ┌──────────┐      ┌──────────┐                       │
+│  │ Work...  │ ──?──│ What was │ ──?──│ Starting │                       │
+│  │ Context  │      │ done?    │      │ over...  │                       │
+│  │ compacts │      │ Guessing │      │          │                       │
+│  └──────────┘      └──────────┘      └──────────┘                       │
+│                                                                         │
+│  Context lost at each transition                                        │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      WITH BATON PASSING                                  │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  Session 1         Session 2         Session 3                          │
+│  ┌──────────┐      ┌──────────┐      ┌──────────┐                       │
+│  │ Work...  │      │ Read     │      │ Read     │                       │
+│  │ Update   │ ────►│ state    │ ────►│ state    │                       │
+│  │ state    │      │ Continue │      │ Continue │                       │
+│  └──────────┘      └──────────┘      └──────────┘                       │
+│       │                 │                 │                             │
+│       ▼                 ▼                 ▼                             │
+│  ┌─────────────────────────────────────────────┐                        │
+│  │              FILE-BASED STATE               │                        │
+│  │  state.json, progress.json, feature-list    │                        │
+│  └─────────────────────────────────────────────┘                        │
+│                                                                         │
+│  Context persists through file system                                   │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Baton Passing Points
+
+| Transition                    | What's Passed                              | How                          |
+| ----------------------------- | ------------------------------------------ | ---------------------------- |
+| **Agent → Agent**             | Phase outputs (discoveries, architecture)  | Output files (discovery.md)  |
+| **Phase → Phase**             | State, completion criteria                 | state.json updates           |
+| **Session → Session**         | Progress, what's done, what's next         | progress.json, handoff notes |
+| **Pre-compaction → Post**     | Critical state that must survive           | PreCompact hook triggers     |
+| **Implementation iteration**  | Feature status, remaining work             | feature-list.json            |
+| **Remediation iteration**     | Finding status, verification results       | findings.json                |
+
+## Hooks in the Workflow
+
+Hooks are event-driven automation that enables baton passing and Ralph loops.
+
+### Critical Hook Events for Feature-Forge
+
+| Hook Event      | When Fires                    | Feature-Forge Use                                |
+| --------------- | ----------------------------- | ------------------------------------------------ |
+| **SessionStart**| Session begins                | Load state.json, identify current phase          |
+| **Stop**        | Agent wants to stop           | Ralph loops: check completion, feed back prompt  |
+| **SubagentStop**| Subagent completes            | Process agent results, update state              |
+| **PreCompact**  | Before context compaction     | **Critical:** Persist state before tokens cleared |
+| **PreToolUse**  | Before tool executes          | Validate dangerous operations if needed          |
+
+### PreCompact: The Session Continuity Hook
+
+**This is critical for long-running workflows.**
+
+When context is about to be compacted (auto-summarization), the PreCompact hook must:
+
+1. Update state.json with current phase and progress
+2. Update progress.json with session notes
+3. Ensure feature-list.json or findings.json reflects current status
+4. Commit any pending work to git
+
+```
+Context approaching limit
+         │
+         ▼
+  PreCompact hook fires
+         │
+         ▼
+  ┌────────────────────────────────┐
+  │  1. Read current state         │
+  │  2. Update JSON files          │
+  │  3. Write handoff notes        │
+  │  4. Commit if needed           │
+  └────────────────────────────────┘
+         │
+         ▼
+  Context compacts (summarized)
+         │
+         ▼
+  New context reads state files
+  and continues where it left off
+```
+
+### Stop Hook: The Ralph Loop Mechanism
+
+The Stop hook intercepts session exit to enable iterative loops:
+
+```
+Claude attempts to stop
+         │
+         ▼
+  Stop hook fires
+         │
+         ▼
+  ┌────────────────────────────────┐
+  │  Check completion criteria:    │
+  │  - All features complete?      │
+  │  - Tests passing?              │
+  │  - Lint clean?                 │
+  │  - Promise tag present?        │
+  └────────────────────────────────┘
+         │
+    ┌────┴────┐
+    │         │
+Complete   Incomplete
+    │         │
+    ▼         ▼
+ Allow     Block exit,
+ exit      feed prompt back,
+           increment iteration
+```
+
+**Stop hook output to continue loop:**
+
+```json
+{
+  "decision": "block",
+  "reason": "Continue implementing. Next feature: auth-003",
+  "systemMessage": "Iteration 5/50 | Features: 2/8 complete"
+}
+```
+
+### Hook Placement in Feature-Forge Workflow
+
+```
+SESSION START
+      │
+      ▼
+┌─────────────────┐
+│ SessionStart    │──► Load state.json, identify phase
+│ hook            │    If resuming: read progress.json
+└─────────────────┘
+      │
+      ▼
+UNDERSTANDING / DESIGN phases (linear)
+      │
+      ▼
+┌─────────────────┐
+│ SubagentStop    │──► When agents complete, process results
+│ hook            │    Update state with agent outputs
+└─────────────────┘
+      │
+      ▼
+IMPLEMENTATION (Ralph loop)
+      │
+      ├──► Work on one feature
+      │
+      ▼
+┌─────────────────┐
+│ Stop hook       │──► Check: all features complete?
+│                 │    No: block exit, feed back prompt
+│                 │    Yes: allow exit, proceed to Review
+└─────────────────┘
+      │
+      ▼
+REVIEW / REMEDIATION (Ralph loop)
+      │
+      ├──► Fix one finding
+      │
+      ▼
+┌─────────────────┐
+│ Stop hook       │──► Check: all findings resolved?
+│                 │    No: block exit, continue fixes
+│                 │    Yes: allow exit, proceed to Summary
+└─────────────────┘
+      │
+      ▼
+AT ANY POINT (approaching token limit)
+      │
+      ▼
+┌─────────────────┐
+│ PreCompact      │──► Update all state files
+│ hook            │    Ensure nothing is lost
+│                 │    New context can resume
+└─────────────────┘
+```
+
 ## The Ralph Wiggum Pattern
 
 ### Core Concept
@@ -248,18 +444,30 @@ Claude Code uses hierarchical memory files:
 - Duplicate what linters/formatters handle
 - Let it grow unbounded
 
-## Context Editing
+## Context Compaction and Continuity
 
-When approaching token limits, stale content should be cleared:
+When approaching token limits, context is compacted (auto-summarized). This is why PreCompact is critical.
 
-- Keep recent tool calls (last 3)
-- Archive detailed history
-- Preserve essential state in files
+### What Must Survive Compaction
 
-**Results from Anthropic's evaluation:**
+| Must Persist                       | Where                        |
+| ---------------------------------- | ---------------------------- |
+| Current phase                      | state.json                   |
+| Completion criteria                | state.json                   |
+| Features done / remaining          | feature-list.json            |
+| Findings done / remaining          | findings.json                |
+| Session notes and context          | progress.json                |
+| Uncommitted insights               | Commit or write to MD file   |
 
-- Memory + context editing: **39% improvement** over baseline
-- 100-turn web search: **84% token reduction**
+### PreCompact Checklist
+
+Before context compacts:
+
+- [ ] state.json reflects current phase and status
+- [ ] progress.json has session notes
+- [ ] feature-list.json or findings.json is current
+- [ ] Any uncommitted code is committed
+- [ ] Any important reasoning is in MD files
 
 ## Handoff Protocol
 
@@ -297,3 +505,5 @@ When transitioning between sessions or phases:
 5. **Clean handoffs** — Next iteration should understand immediately
 6. **Archive old progress** — Keep active files lean
 7. **Test e2e** — Browser automation catches what code review misses
+8. **PreCompact is critical** — Always ensure state persists before compaction
+9. **Hooks enable continuity** — SessionStart loads, PreCompact saves, Stop loops

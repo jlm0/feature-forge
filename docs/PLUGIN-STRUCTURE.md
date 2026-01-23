@@ -48,7 +48,7 @@ Plugins use three-level loading to manage context:
 
 **Key insight:** Scripts execute without loading into context — they're token-free.
 
-## Skills (16 Total)
+## Skills (18 Total)
 
 Skills are **methodologies** that frame how agents think. They are pre-loaded into agents at spawn time.
 
@@ -56,6 +56,7 @@ Skills are **methodologies** that frame how agents think. They are pre-loaded in
 
 | Skill                       | Purpose                              | Methodology                                     |
 | --------------------------- | ------------------------------------ | ----------------------------------------------- |
+| **ask-questions**           | Clarify before acting                | Minimum questions, multiple-choice, pause until answered |
 | **code-exploration**        | Trace code, map architecture         | Entry points → call chains → dependencies       |
 | **docs-research**           | Read and digest external docs        | Identify sources → extract patterns → synthesize |
 | **deep-context**            | Ultra-granular code analysis         | Line-by-line, First Principles, 5 Whys          |
@@ -63,6 +64,7 @@ Skills are **methodologies** that frame how agents think. They are pre-loaded in
 | **footgun-detection**       | API misuse and dangerous defaults    | Adversary modeling, edge case probing           |
 | **variant-hunt**            | Find similar issues                  | Start specific → generalize → stop at 50% FP    |
 | **fix-verify**              | Verify fixes address root cause      | Differential analysis, regression detection     |
+| **differential-review**     | Security-focused code review         | Risk-based triage, adaptive depth, blast radius |
 | **ui-ux-design**            | Visual design and UX                 | User flows, interaction patterns, accessibility |
 | **frontend-engineering**    | Frontend technical implementation    | State management, components, data fetching     |
 | **api-design**              | API contract design                  | REST/GraphQL conventions, versioning            |
@@ -124,18 +126,20 @@ Agents are **domain-specific actors** with isolated context windows. They are li
 
 ### Agent = Who (Role)
 
-| Agent                | Role                          | Pre-loaded Skills                                                         | Tools                                 |
-| -------------------- | ----------------------------- | ------------------------------------------------------------------------- | ------------------------------------- |
-| **context-builder**  | Explore codebase and docs     | code-exploration, docs-research                                           | Read, Grep, Glob, WebSearch, WebFetch |
-| **security-analyst** | Security analysis             | deep-context, threat-model, footgun-detection, variant-hunt, fix-verify   | Read, Grep, Glob                      |
-| **ui-ux-designer**   | Visual and interaction design | ui-ux-design                                                              | Read, Grep, Glob, WebFetch            |
-| **frontend-engineer**| Frontend technical design     | frontend-engineering                                                      | Read, Grep, Glob                      |
-| **api-designer**     | API contract design           | api-design                                                                | Read, Grep, Glob                      |
-| **data-modeler**     | Database schema design        | data-modeling                                                             | Read, Grep, Glob                      |
-| **architect**        | Synthesize into blueprint     | architecture-synthesis, triage                                            | Read, Grep, Glob                      |
-| **implementer**      | Write production code         | implementation-discipline, testing-methodology                            | Read, Write, Edit, Bash, Grep, Glob   |
-| **reviewer**         | Evaluate implementation       | code-review, deep-context                                                 | Read, Grep, Glob, Bash                |
-| **remediator**       | Fix identified issues         | implementation-discipline, testing-methodology, fix-verify                | Read, Write, Edit, Bash, Grep, Glob   |
+All agents have the **ask-questions** skill pre-loaded for human interaction.
+
+| Agent                | Role                          | Pre-loaded Skills                                                                      | Tools                                 |
+| -------------------- | ----------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------- |
+| **context-builder**  | Explore codebase and docs     | ask-questions, code-exploration, docs-research                                         | Read, Grep, Glob, WebSearch, WebFetch |
+| **security-analyst** | Security analysis             | ask-questions, deep-context, threat-model, footgun-detection, variant-hunt, fix-verify | Read, Grep, Glob                      |
+| **ui-ux-designer**   | Visual and interaction design | ask-questions, ui-ux-design                                                            | Read, Grep, Glob, WebFetch            |
+| **frontend-engineer**| Frontend technical design     | ask-questions, frontend-engineering                                                    | Read, Grep, Glob                      |
+| **api-designer**     | API contract design           | ask-questions, api-design                                                              | Read, Grep, Glob                      |
+| **data-modeler**     | Database schema design        | ask-questions, data-modeling                                                           | Read, Grep, Glob                      |
+| **architect**        | Synthesize into blueprint     | ask-questions, architecture-synthesis, triage                                          | Read, Grep, Glob                      |
+| **implementer**      | Write production code         | ask-questions, implementation-discipline, testing-methodology                          | Read, Write, Edit, Bash, Grep, Glob   |
+| **reviewer**         | Evaluate implementation       | ask-questions, code-review, deep-context, differential-review                          | Read, Grep, Glob, Bash                |
+| **remediator**       | Fix identified issues         | ask-questions, implementation-discipline, testing-methodology, fix-verify              | Read, Write, Edit, Bash, Grep, Glob   |
 
 ### Agent Structure
 
@@ -308,6 +312,191 @@ The Stop hook intercepts session exit to implement iterative loops:
 }
 ```
 
+## Hooks
+
+Hooks are event-driven automation scripts that execute in response to Claude Code events. Feature-Forge uses hooks for Ralph loops and session continuity.
+
+### Hook Events Feature-Forge Needs
+
+| Hook Event      | When Fires                    | Feature-Forge Use                                |
+| --------------- | ----------------------------- | ------------------------------------------------ |
+| **SessionStart**| Session begins                | Load state.json, identify current phase, resume  |
+| **Stop**        | Agent wants to stop           | Ralph loops: check completion, feed back prompt  |
+| **SubagentStop**| Subagent completes            | Process agent results, update state              |
+| **PreCompact**  | Before context compaction     | **Critical:** Persist state before tokens cleared |
+
+### SessionStart Hook
+
+**Purpose:** Initialize workflow state when a session begins.
+
+**Behavior:**
+1. Check for existing `.claude/feature-forge/state.json`
+2. If exists: Load current phase, read progress.json
+3. If new: Initialize workspace (on first `/feature-forge` command)
+
+**Why needed:** Agents start fresh—they need to read state to know where work left off.
+
+### Stop Hook (Ralph Loops)
+
+**Purpose:** Enable iterative implementation and remediation loops.
+
+**Behavior:**
+1. Agent attempts to stop
+2. Hook reads state.json and feature-list.json (or findings.json)
+3. Checks completion criteria:
+   - All features complete? All findings resolved?
+   - Tests passing? Lint clean?
+   - Promise tag present?
+4. If incomplete: Block exit, feed prompt back, increment iteration
+5. If complete: Allow exit, proceed to next phase
+
+**Output format to continue loop:**
+```json
+{
+  "decision": "block",
+  "reason": "Continue implementing. Next feature: auth-003",
+  "systemMessage": "Iteration 5/50 | Features: 2/8 complete"
+}
+```
+
+**Max iterations:** Safety limit to prevent infinite loops (e.g., 50 for implementation, 30 for remediation).
+
+### SubagentStop Hook
+
+**Purpose:** Process results when agents complete their work.
+
+**Behavior:**
+1. Subagent completes work
+2. Hook captures agent output
+3. Updates state.json with agent results
+4. Orchestrator can read results and proceed
+
+**Why needed:** Orchestrator needs to know when parallel agents finish and collect their outputs.
+
+### PreCompact Hook (Critical for Session Continuity)
+
+**Purpose:** Persist all state before context compaction.
+
+**Behavior:**
+1. Context approaching token limit
+2. Hook fires before compaction
+3. Must update:
+   - state.json (current phase, progress)
+   - progress.json (session notes)
+   - feature-list.json or findings.json (current status)
+4. Commit any uncommitted work to git
+5. Context compacts safely
+6. New context reads state files and continues
+
+**Why critical:** Without this, long-running sessions lose progress when tokens run out.
+
+**PreCompact checklist:**
+- [ ] state.json reflects current phase
+- [ ] progress.json has session notes
+- [ ] feature-list.json or findings.json is current
+- [ ] Uncommitted code is committed
+- [ ] Important reasoning is in MD files
+
+### Hook Placement in Workflow
+
+```
+/feature-forge invoked
+      │
+      ▼
+┌─────────────────┐
+│ SessionStart    │──► Load state, identify phase
+└─────────────────┘
+      │
+      ▼
+UNDERSTANDING / DESIGN phases
+      │
+      ▼
+┌─────────────────┐
+│ SubagentStop    │──► Agents complete, collect results
+└─────────────────┘
+      │
+      ▼
+IMPLEMENTATION (Ralph loop)
+      │
+      ▼
+┌─────────────────┐
+│ Stop hook       │──► Check completion, loop or proceed
+└─────────────────┘
+      │
+      ▼
+REMEDIATION (Ralph loop)
+      │
+      ▼
+┌─────────────────┐
+│ Stop hook       │──► Check completion, loop or proceed
+└─────────────────┘
+      │
+      ▼
+AT ANY POINT (token limit approaching)
+      │
+      ▼
+┌─────────────────┐
+│ PreCompact      │──► Persist all state
+└─────────────────┘
+```
+
+### Hook Types
+
+Feature-Forge hooks will likely be **prompt-based** (LLM-driven) for complex logic and **command-based** (bash scripts) for deterministic checks:
+
+| Hook            | Type    | Why                                              |
+| --------------- | ------- | ------------------------------------------------ |
+| SessionStart    | Command | Fast, deterministic state loading                |
+| Stop            | Prompt  | Complex completion checking, context-aware       |
+| SubagentStop    | Command | Deterministic result processing                  |
+| PreCompact      | Prompt  | Needs to understand what to persist              |
+
+### hooks.json Structure
+
+```json
+{
+  "description": "Feature-Forge workflow hooks",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/session-start.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Check completion criteria in state.json and feature-list.json. If incomplete, return block decision with next task.",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Persist current progress: update state.json, progress.json, and commit any pending work.",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
 ## Complete Plugin Structure
 
 ```
@@ -319,18 +508,19 @@ feature-forge/
 │   └── feature-forge.md           # Main orchestrator
 │
 ├── agents/
-│   ├── context-builder.md         # code-exploration, docs-research
-│   ├── security-analyst.md        # deep-context, threat-model, footgun-detection, variant-hunt, fix-verify
-│   ├── ui-ux-designer.md          # ui-ux-design
-│   ├── frontend-engineer.md       # frontend-engineering
-│   ├── api-designer.md            # api-design
-│   ├── data-modeler.md            # data-modeling
-│   ├── architect.md               # architecture-synthesis, triage
-│   ├── implementer.md             # implementation-discipline, testing-methodology
-│   ├── reviewer.md                # code-review, deep-context
-│   └── remediator.md              # implementation-discipline, testing-methodology, fix-verify
+│   ├── context-builder.md         # ask-questions, code-exploration, docs-research
+│   ├── security-analyst.md        # ask-questions, deep-context, threat-model, footgun-detection, variant-hunt, fix-verify
+│   ├── ui-ux-designer.md          # ask-questions, ui-ux-design
+│   ├── frontend-engineer.md       # ask-questions, frontend-engineering
+│   ├── api-designer.md            # ask-questions, api-design
+│   ├── data-modeler.md            # ask-questions, data-modeling
+│   ├── architect.md               # ask-questions, architecture-synthesis, triage
+│   ├── implementer.md             # ask-questions, implementation-discipline, testing-methodology
+│   ├── reviewer.md                # ask-questions, code-review, deep-context, differential-review
+│   └── remediator.md              # ask-questions, implementation-discipline, testing-methodology, fix-verify
 │
 ├── skills/
+│   ├── ask-questions/SKILL.md     # Clarification methodology (all agents)
 │   ├── code-exploration/SKILL.md
 │   ├── docs-research/SKILL.md
 │   ├── deep-context/SKILL.md
@@ -338,6 +528,7 @@ feature-forge/
 │   ├── footgun-detection/SKILL.md
 │   ├── variant-hunt/SKILL.md
 │   ├── fix-verify/SKILL.md
+│   ├── differential-review/SKILL.md  # Risk-based code review
 │   ├── ui-ux-design/SKILL.md
 │   ├── frontend-engineering/SKILL.md
 │   ├── api-design/SKILL.md
@@ -348,14 +539,16 @@ feature-forge/
 │   ├── code-review/SKILL.md
 │   └── triage/SKILL.md
 │
+├── hooks/
+│   ├── hooks.json                 # Hook configuration
+│   ├── session-start.sh           # Load state on session start
+│   ├── stop-check.sh              # Ralph loop completion check
+│   └── precompact-persist.sh      # Persist state before compaction
+│
 ├── scripts/
 │   ├── init-workspace.sh          # Creates .claude/feature-forge/
 │   ├── state-manager.py           # JSON state operations
 │   └── progress-tracker.py        # Session handoffs
-│
-├── hooks/
-│   ├── hooks.json
-│   └── ralph-stop-hook.sh         # For implementation/remediation loops
 │
 └── README.md
 ```

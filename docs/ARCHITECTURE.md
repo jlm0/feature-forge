@@ -20,46 +20,94 @@ Skills define how an agent thinks about problems. They are:
 - Reusable across different phases
 - The "lens" through which work is viewed
 
-### Key Distinction
+### Human Input = Cross-Cutting Mechanism
 
-| Concept   | Answers | Example                                       |
-| --------- | ------- | --------------------------------------------- |
-| **Agent** | Who?    | "The security analyst examines the code"      |
-| **Skill** | How?    | "Using threat modeling methodology (STRIDE)"  |
-| **Phase** | When?   | "During the Design group"                     |
-| **Tool**  | With?   | "Using Read, Grep, Glob to explore"           |
+Human input is NOT a discrete phase—it's a mechanism available throughout:
 
-## Phase Groups
+- **Questions** — Agents ask when uncertain (internal to phases)
+- **Checkpoints** — Explicit approval gates at phase transitions
+- **AskUserQuestion tool** — Interactive prompting for clarification
 
-Feature-Forge operates in four macro groups:
+The human is the orchestrating architect, always available to guide.
+
+### Key Distinctions
+
+| Concept        | Answers | Example                                           |
+| -------------- | ------- | ------------------------------------------------- |
+| **Agent**      | Who?    | "The security analyst examines the code"          |
+| **Skill**      | How?    | "Using threat modeling methodology (STRIDE)"      |
+| **Phase**      | When?   | "During the Design group"                         |
+| **Tool**       | With?   | "Using Read, Grep, Glob to explore"               |
+| **Questions**  | Clarify | "Agent asks user for scope clarification"         |
+| **Checkpoint** | Approve | "Human approves architecture before implementation"|
+
+## Questions vs Checkpoints
+
+Two types of human interaction, serving different purposes:
+
+### Questions (Internal to Phases)
+
+**What:** Agents ask clarifying questions while working
+**When:** Uncertainty arises, multiple valid paths, user could provide shortcuts
+**How:** AskUserQuestion tool with multiple-choice options
+**Behavior:** Agent pauses, gets answer, continues work
 
 ```
-UNDERSTANDING (Linear)
-├── Discovery        → What needs to be built
-├── Exploration      → How the codebase works (parallel agents)
-└── Security Context → Trust boundaries, attack surfaces
-
-CLARIFICATION (Human Input)
-└── Questions        → Resolve ambiguities [HUMAN INPUT]
-
-DESIGN (2 iterations max)
-├── Architecture     → Parallel specialists → synthesis
-├── Security Review  → Review for footguns
-└── Triage           → Prioritize for v1 [HUMAN CHECKPOINT]
-
-EXECUTION (Ralph Loops)
-├── Implementation   → Build features (Ralph loop)
-├── Review           → Quality + security (parallel reviewers)
-├── Remediation      → Fix issues (Ralph loop, 2 max)
-└── Summary          → Document and handoff
+Agent working
+      │
+      ├── Encounters uncertainty
+      │
+      ▼
+Ask question (multiple-choice, defaults)
+      │
+      ▼
+Wait for answer
+      │
+      ▼
+Confirm interpretation
+      │
+      ▼
+Continue work
 ```
 
-## Skills (16 Total)
+### Checkpoints (Phase Transitions)
+
+**What:** Explicit approval gates before major transitions
+**When:** Phase group completes, significant investment ahead
+**How:** Present summary, request approval
+**Behavior:** Work stops until human approves or requests changes
+
+```
+Phase group completes
+      │
+      ▼
+Present summary + outputs
+      │
+      ▼
+Wait for approval
+      │
+      ├── Approved ──► Proceed to next group
+      │
+      └── Changes ──► Iterate (max 2)
+```
+
+### Summary Table
+
+| Aspect          | Questions                        | Checkpoints                     |
+| --------------- | -------------------------------- | ------------------------------- |
+| **Purpose**     | Clarify uncertainty              | Approve direction               |
+| **Timing**      | Internal to phases               | Between phase groups            |
+| **Frequency**   | As needed                        | Fixed points in workflow        |
+| **Blocking**    | Pauses current agent             | Stops all progress              |
+| **Output**      | Answer incorporated, work continues | Approval or iteration request |
+
+## Skills (17 Total)
 
 Skills are methodologies pre-loaded into agents to frame their thinking.
 
 | Skill                       | Purpose                              | Methodology                                     |
 | --------------------------- | ------------------------------------ | ----------------------------------------------- |
+| **ask-questions**           | Clarify before acting                | Minimum questions, multiple-choice, pause until answered |
 | **code-exploration**        | Trace code, map architecture         | Entry points → call chains → dependencies       |
 | **docs-research**           | Read and digest external docs        | Identify sources → extract patterns → synthesize |
 | **deep-context**            | Ultra-granular code analysis         | Line-by-line, First Principles, 5 Whys          |
@@ -67,6 +115,7 @@ Skills are methodologies pre-loaded into agents to frame their thinking.
 | **footgun-detection**       | API misuse and dangerous defaults    | Adversary modeling, edge case probing           |
 | **variant-hunt**            | Find similar issues                  | Start specific → generalize → stop at 50% FP    |
 | **fix-verify**              | Verify fixes address root cause      | Differential analysis, regression detection     |
+| **differential-review**     | Security-focused code review         | Risk-based triage, adaptive depth, blast radius |
 | **ui-ux-design**            | Visual design and UX                 | User flows, interaction patterns, accessibility |
 | **frontend-engineering**    | Frontend technical implementation    | State management, components, data fetching     |
 | **api-design**              | API contract design                  | REST/GraphQL conventions, versioning            |
@@ -77,57 +126,132 @@ Skills are methodologies pre-loaded into agents to frame their thinking.
 | **code-review**             | Evaluate code quality                | Bug patterns, convention adherence              |
 | **triage**                  | Prioritization decisions             | Impact, urgency, risk assessment                |
 
+### The ask-questions Skill
+
+Inspired by Trail of Bits' "ask-questions-if-underspecified" skill. ALL agents should have this.
+
+**When to use:**
+- Multiple plausible interpretations exist
+- Key details (objective, scope, constraints) are unclear
+- Decision exceeds delegated authority
+- User could provide valuable shortcuts (sources, existing code)
+
+**How to ask:**
+1. Ask 1-5 questions maximum (prefer questions that eliminate branches)
+2. Make questions easy to answer:
+   - Multiple-choice options when possible
+   - Suggest reasonable defaults (marked clearly)
+   - Include fast-path response ("reply `defaults` to accept all")
+   - Numbered questions with lettered options
+3. **Pause before acting** until answers arrive
+4. Can do low-risk discovery while waiting
+5. Confirm interpretation before proceeding
+
+**Question template:**
+```
+Before I proceed, I need to clarify:
+
+1) Scope?
+   a) Minimal change (recommended)
+   b) Refactor while touching the area
+   c) Not sure - use default
+
+2) Which authentication approach?
+   a) JWT tokens (recommended for your mobile app)
+   b) Session cookies
+   c) OAuth only
+
+Reply with: defaults (or 1a 2a)
+```
+
+### The differential-review Skill
+
+Inspired by Trail of Bits' differential-review skill. Used in Review phase.
+
+**When to use:**
+- Reviewing implementation for quality and security
+- Analyzing PRs, commits, or diffs
+
+**Methodology:**
+- Classify risk level per file (HIGH, MEDIUM, LOW)
+- Adapt analysis depth to codebase size (SMALL, MEDIUM, LARGE)
+- Calculate blast radius for high-risk changes
+- Generate concrete attack scenarios, not generic findings
+- Reference specific line numbers and commits
+
 ## Agents (10 Total)
 
-Agents are domain-specific actors, like a real development team.
+All agents have access to the `ask-questions` skill for human interaction.
 
-| Agent                | Role                         | Pre-loaded Skills                                          | Tools                                      |
-| -------------------- | ---------------------------- | ---------------------------------------------------------- | ------------------------------------------ |
-| **context-builder**  | Explore codebase and docs    | code-exploration, docs-research                            | Read, Grep, Glob, WebSearch, WebFetch      |
-| **security-analyst** | Security analysis            | deep-context, threat-model, footgun-detection, variant-hunt, fix-verify | Read, Grep, Glob          |
-| **ui-ux-designer**   | Visual and interaction design| ui-ux-design                                               | Read, Grep, Glob, WebFetch                 |
-| **frontend-engineer**| Frontend technical design    | frontend-engineering                                       | Read, Grep, Glob                           |
-| **api-designer**     | API contract design          | api-design                                                 | Read, Grep, Glob                           |
-| **data-modeler**     | Database schema design       | data-modeling                                              | Read, Grep, Glob                           |
-| **architect**        | Synthesize into blueprint    | architecture-synthesis, triage                             | Read, Grep, Glob                           |
-| **implementer**      | Write production code        | implementation-discipline, testing-methodology             | Read, Write, Edit, Bash, Grep, Glob        |
-| **reviewer**         | Evaluate implementation      | code-review, deep-context                                  | Read, Grep, Glob, Bash                     |
-| **remediator**       | Fix identified issues        | implementation-discipline, testing-methodology, fix-verify | Read, Write, Edit, Bash, Grep, Glob        |
+| Agent                | Role                         | Pre-loaded Skills                                                         | Tools                                 |
+| -------------------- | ---------------------------- | ------------------------------------------------------------------------- | ------------------------------------- |
+| **context-builder**  | Explore codebase and docs    | ask-questions, code-exploration, docs-research                            | Read, Grep, Glob, WebSearch, WebFetch |
+| **security-analyst** | Security analysis            | ask-questions, deep-context, threat-model, footgun-detection, variant-hunt, fix-verify | Read, Grep, Glob       |
+| **ui-ux-designer**   | Visual and interaction design| ask-questions, ui-ux-design                                               | Read, Grep, Glob, WebFetch            |
+| **frontend-engineer**| Frontend technical design    | ask-questions, frontend-engineering                                       | Read, Grep, Glob                      |
+| **api-designer**     | API contract design          | ask-questions, api-design                                                 | Read, Grep, Glob                      |
+| **data-modeler**     | Database schema design       | ask-questions, data-modeling                                              | Read, Grep, Glob                      |
+| **architect**        | Synthesize into blueprint    | ask-questions, architecture-synthesis, triage                             | Read, Grep, Glob                      |
+| **implementer**      | Write production code        | ask-questions, implementation-discipline, testing-methodology             | Read, Write, Edit, Bash, Grep, Glob   |
+| **reviewer**         | Evaluate implementation      | ask-questions, code-review, deep-context, differential-review             | Read, Grep, Glob, Bash                |
+| **remediator**       | Fix identified issues        | ask-questions, implementation-discipline, testing-methodology, fix-verify | Read, Write, Edit, Bash, Grep, Glob   |
 
-## Phase Flow with Inputs/Outputs
+## Phase Groups
+
+Feature-Forge operates in three macro groups:
+
+```
+UNDERSTANDING
+├── Discovery        [CAN ASK: sources, constraints, scope]
+├── Exploration      [CAN ASK: confirm patterns, clarify code]
+└── Security Context [CAN ASK: risk tolerance, compliance]
+
+DESIGN (2 iterations max)
+├── Architecture     [CAN ASK: trade-offs, preferences]
+├── Security Review  [CAN ASK: acceptable risks]
+└── Triage           [CHECKPOINT: approve priorities]
+
+EXECUTION
+├── Implementation   [CAN ASK: blockers, approach]
+├── Review           [CHECKPOINT: disposition findings]
+├── Remediation      [CAN ASK: fix approaches]
+└── Summary
+```
+
+**Legend:**
+- `[CAN ASK]` — Agent uses ask-questions skill when uncertain
+- `[CHECKPOINT]` — Requires explicit human approval to proceed
+
+## Human Input Opportunities
 
 ### UNDERSTANDING Group
 
-| Phase              | Agent(s)                | Inputs                   | Outputs                | Notes                  |
-| ------------------ | ----------------------- | ------------------------ | ---------------------- | ---------------------- |
-| **Discovery**      | context-builder         | User request             | `discovery.md`         | Single agent           |
-| **Exploration**    | context-builder (×2)    | Discovery + codebase     | `exploration.md`       | **Parallel**: code + docs |
-| **Security Context** | security-analyst      | Exploration outputs      | `security-context.md`  | Trust boundaries, attack surfaces |
+| Phase              | Questions Agents Might Ask                                    |
+| ------------------ | ------------------------------------------------------------- |
+| **Discovery**      | "What sources should I read?" "What's out of scope?"          |
+| **Exploration**    | "This pattern is unusual—is it intentional?" "Confirm X?"     |
+| **Security Context**| "What's your risk tolerance?" "Compliance requirements?"      |
 
-### CLARIFICATION Group
+**After UNDERSTANDING:** Orchestrator may surface questions that arose during exploration.
 
-| Phase          | Agent(s)        | Inputs            | Outputs              | Notes                 |
-| -------------- | --------------- | ----------------- | -------------------- | --------------------- |
-| **Questions**  | orchestrator    | All prior context | Updated discovery    | [HUMAN INPUT] required |
+### DESIGN Group
 
-### DESIGN Group (2 iterations max)
-
-| Phase              | Agent(s)                               | Inputs              | Outputs               | Notes                      |
-| ------------------ | -------------------------------------- | ------------------- | --------------------- | -------------------------- |
-| **Architecture**   | ui-ux-designer, frontend-engineer, api-designer, data-modeler → architect | All context | `architecture.md` | **Parallel** specialists → synthesis |
-| **Security Review** | security-analyst                      | Architecture        | `hardening-review.md` | Footgun detection          |
-| **Triage**         | architect + security-analyst           | All design outputs  | `triage.json`         | [HUMAN CHECKPOINT]         |
+| Phase              | Questions Agents Might Ask                                    |
+| ------------------ | ------------------------------------------------------------- |
+| **Architecture**   | "Multiple valid approaches—prefer A or B?" "Trade-off: X vs Y?"|
+| **Security Review**| "This risk exists—acceptable for v1?" "Mitigation priority?"  |
+| **Triage**         | **[CHECKPOINT]** — Present design, request approval           |
 
 ### EXECUTION Group
 
-| Phase              | Agent(s)        | Inputs                  | Outputs               | Notes                      |
-| ------------------ | --------------- | ----------------------- | --------------------- | -------------------------- |
-| **Implementation** | implementer     | Architecture + features | Code + commits        | Ralph loop                 |
-| **Review**         | reviewer (×2)   | Implementation          | `findings.json`       | **Parallel**: quality + security |
-| **Remediation**    | remediator      | Findings                | Fixed code + commits  | Ralph loop (2 max)         |
-| **Summary**        | context-builder | All outputs             | `summary.md`          | Document and handoff       |
+| Phase              | Questions Agents Might Ask                                    |
+| ------------------ | ------------------------------------------------------------- |
+| **Implementation** | "Blocked on X—guidance?" "Clarify requirement Y?"             |
+| **Review**         | **[CHECKPOINT]** — Present findings, request disposition      |
+| **Remediation**    | "Multiple fix approaches—preference?" "Accept remaining risk?"|
+| **Summary**        | Final handoff, no questions typically needed                  |
 
-## Detailed Phase Flow
+## Phase Flow with Human Input
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -135,18 +259,19 @@ Agents are domain-specific actors, like a real development team.
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  ╔═══════════════════════════════════════════════════════════════════════╗  │
-│  ║                    UNDERSTANDING (Linear → Parallel)                  ║  │
+│  ║                    UNDERSTANDING                                      ║  │
 │  ╠═══════════════════════════════════════════════════════════════════════╣  │
 │  ║                                                                       ║  │
-│  ║  DISCOVERY ──────────────────────────────────────────────────────────►║  │
-│  ║      │                                                                ║  │
+│  ║  DISCOVERY ◄─── questions ───────────────────────────────────────────►║  │
+│  ║      │         (sources, scope, constraints)                          ║  │
 │  ║      │                                                                ║  │
 │  ║      ├──► context-builder (code) ─────┐                               ║  │
-│  ║      │                                ├──► exploration.md             ║  │
+│  ║      │         ◄── questions ──►      ├──► exploration.md             ║  │
 │  ║      └──► context-builder (docs) ─────┘                               ║  │
 │  ║                    (PARALLEL)              │                          ║  │
 │  ║                                            ▼                          ║  │
 │  ║                                  security-analyst                     ║  │
+│  ║                                    ◄── questions ──►                  ║  │
 │  ║                                            │                          ║  │
 │  ║                                            ▼                          ║  │
 │  ║                                  security-context.md                  ║  │
@@ -155,44 +280,35 @@ Agents are domain-specific actors, like a real development team.
 │                              │                                              │
 │                              ▼                                              │
 │  ╔═══════════════════════════════════════════════════════════════════════╗  │
-│  ║                    CLARIFICATION [HUMAN INPUT]                        ║  │
-│  ╠═══════════════════════════════════════════════════════════════════════╣  │
-│  ║                                                                       ║  │
-│  ║  Present ambiguities and questions to human                           ║  │
-│  ║  Human provides answers/decisions                                     ║  │
-│  ║  Update discovery.md with clarifications                              ║  │
-│  ║                                                                       ║  │
-│  ╚═══════════════════════════════════════════════════════════════════════╝  │
-│                              │                                              │
-│                              ▼                                              │
-│  ╔═══════════════════════════════════════════════════════════════════════╗  │
 │  ║                    DESIGN (2 iterations max)                          ║  │
 │  ╠═══════════════════════════════════════════════════════════════════════╣  │
 │  ║                                                                       ║  │
-│  ║  ┌──────────────────────────────────────────────────────────────┐     ║  │
-│  ║  │ ARCHITECTURE (Parallel Specialists)                          │     ║  │
-│  ║  │                                                              │     ║  │
-│  ║  │   ui-ux-designer ─────┐                                      │     ║  │
-│  ║  │   frontend-engineer ──┼──► architect ──► architecture.md     │     ║  │
-│  ║  │   api-designer ───────┤      (synthesis)                     │     ║  │
-│  ║  │   data-modeler ───────┘                                      │     ║  │
-│  ║  │                                                              │     ║  │
-│  ║  └──────────────────────────────────────────────────────────────┘     ║  │
+│  ║  ARCHITECTURE (Parallel Specialists)                                  ║  │
+│  ║  ◄───────────────── questions ──────────────────►                     ║  │
+│  ║                                                                       ║  │
+│  ║    ui-ux-designer ─────┐                                              ║  │
+│  ║    frontend-engineer ──┼──► architect ──► architecture.md             ║  │
+│  ║    api-designer ───────┤      (synthesis)                             ║  │
+│  ║    data-modeler ───────┘                                              ║  │
 │  ║                              │                                        ║  │
 │  ║                              ▼                                        ║  │
-│  ║                    security-analyst                                   ║  │
+│  ║                    security-analyst ◄── questions ──►                 ║  │
 │  ║                    (footgun detection)                                ║  │
 │  ║                              │                                        ║  │
 │  ║                              ▼                                        ║  │
 │  ║                    hardening-review.md                                ║  │
 │  ║                              │                                        ║  │
 │  ║                              ▼                                        ║  │
-│  ║                    TRIAGE [HUMAN CHECKPOINT]                          ║  │
+│  ║            ╔═════════════════════════════════════════╗                ║  │
+│  ║            ║  TRIAGE [CHECKPOINT]                    ║                ║  │
+│  ║            ║  Present: architecture + security       ║                ║  │
+│  ║            ║  Human: approve / request changes       ║                ║  │
+│  ║            ╚═════════════════════════════════════════╝                ║  │
 │  ║                              │                                        ║  │
-│  ║              ┌─── approved ──┴─── needs changes ───┐                  ║  │
-│  ║              │                                     │                  ║  │
-│  ║              ▼                                     │                  ║  │
-│  ║         triage.json              (loop back, max 2 iterations)        ║  │
+│  ║              ┌─── approved ──┴─── changes ───┐                        ║  │
+│  ║              │                               │                        ║  │
+│  ║              ▼                        (max 2 iterations)              ║  │
+│  ║         triage.json                                                   ║  │
 │  ║                                                                       ║  │
 │  ╚═══════════════════════════════════════════════════════════════════════╝  │
 │                              │                                              │
@@ -201,57 +317,37 @@ Agents are domain-specific actors, like a real development team.
 │  ║                    EXECUTION (Ralph Loops)                            ║  │
 │  ╠═══════════════════════════════════════════════════════════════════════╣  │
 │  ║                                                                       ║  │
-│  ║  ┌─────────────────────────────────────────────────────────────┐      ║  │
-│  ║  │  IMPLEMENTATION (Ralph Loop)                                │      ║  │
-│  ║  │                                                             │      ║  │
-│  ║  │  Read feature-list.json                                     │      ║  │
-│  ║  │       │                                                     │      ║  │
-│  ║  │       ▼                                                     │      ║  │
-│  ║  │  For each feature:                                          │      ║  │
-│  ║  │    1. Read context files                                    │      ║  │
-│  ║  │    2. Implement ONE feature                                 │      ║  │
-│  ║  │    3. Run tests                                             │      ║  │
-│  ║  │    4. Run lint + typecheck                                  │      ║  │
-│  ║  │    5. Commit                                                │      ║  │
-│  ║  │    6. Update feature-list.json                              │      ║  │
-│  ║  │    7. Update progress.json                                  │      ║  │
-│  ║  │    8. Next iteration (fresh context)                        │      ║  │
-│  ║  │                                                             │      ║  │
-│  ║  │  Exit: All features complete OR human intervention          │      ║  │
-│  ║  └─────────────────────────────────────────────────────────────┘      ║  │
+│  ║  IMPLEMENTATION (Ralph Loop) ◄── questions ──►                        ║  │
+│  ║                                (blockers, clarifications)             ║  │
+│  ║  For each feature:                                                    ║  │
+│  ║    1. Read context files                                              ║  │
+│  ║    2. Implement ONE feature                                           ║  │
+│  ║    3. Run tests                                                       ║  │
+│  ║    4. Commit                                                          ║  │
+│  ║    5. Update progress                                                 ║  │
+│  ║    6. Next iteration (fresh context)                                  ║  │
 │  ║                              │                                        ║  │
 │  ║                              ▼                                        ║  │
-│  ║  ┌─────────────────────────────────────────────────────────────┐      ║  │
-│  ║  │  REVIEW (Parallel)                                          │      ║  │
-│  ║  │                                                             │      ║  │
-│  ║  │  reviewer (quality) ────┐                                   │      ║  │
-│  ║  │                         ├──► findings.json                  │      ║  │
-│  ║  │  reviewer (security) ───┘                                   │      ║  │
-│  ║  │                                                             │      ║  │
-│  ║  └─────────────────────────────────────────────────────────────┘      ║  │
+│  ║            ╔═════════════════════════════════════════╗                ║  │
+│  ║            ║  REVIEW [CHECKPOINT]                    ║                ║  │
+│  ║            ║  Present: quality + security findings   ║                ║  │
+│  ║            ║  Human: ship / fix now / defer          ║                ║  │
+│  ║            ╚═════════════════════════════════════════╝                ║  │
 │  ║                              │                                        ║  │
 │  ║               ┌───── clean ──┴─── issues ─────┐                       ║  │
 │  ║               │                               │                       ║  │
 │  ║               ▼                               ▼                       ║  │
-│  ║           SUMMARY          ┌─────────────────────────────────────┐    ║  │
-│  ║                            │  REMEDIATION (Ralph Loop, 2 max)    │    ║  │
-│  ║                            │                                     │    ║  │
-│  ║                            │  Read findings.json                 │    ║  │
-│  ║                            │       │                             │    ║  │
-│  ║                            │       ▼                             │    ║  │
-│  ║                            │  For each finding:                  │    ║  │
-│  ║                            │    1. Design fix                    │    ║  │
-│  ║                            │    2. Implement fix                 │    ║  │
-│  ║                            │    3. Verify fix                    │    ║  │
-│  ║                            │    4. Commit                        │    ║  │
-│  ║                            │    5. Update findings.json          │    ║  │
-│  ║                            │    6. Next iteration                │    ║  │
-│  ║                            │                                     │    ║  │
-│  ║                            │  Exit: All findings resolved        │    ║  │
-│  ║                            └─────────────────────────────────────┘    ║  │
-│  ║                                              │                        ║  │
-│  ║                                              ▼                        ║  │
-│  ║                                           SUMMARY                     ║  │
+│  ║           SUMMARY          REMEDIATION (Ralph Loop)                   ║  │
+│  ║                            ◄── questions ──►                          ║  │
+│  ║                            (fix approaches)                           ║  │
+│  ║                            For each finding:                          ║  │
+│  ║                              1. Design fix                            ║  │
+│  ║                              2. Implement fix                         ║  │
+│  ║                              3. Verify fix                            ║  │
+│  ║                              4. Commit                                ║  │
+│  ║                                    │                                  ║  │
+│  ║                                    ▼                                  ║  │
+│  ║                                 SUMMARY                               ║  │
 │  ║                                                                       ║  │
 │  ╚═══════════════════════════════════════════════════════════════════════╝  │
 │                                                                             │
@@ -266,21 +362,6 @@ Agents are domain-specific actors, like a real development team.
 | Architecture | ui-ux, frontend-engineer, api-designer, data-modeler    | All complete → architect    |
 | Review       | reviewer (quality), reviewer (security)                 | Both complete → merge       |
 
-## Remediation as Mini Main Loop
-
-The remediation phase mirrors the main workflow structure:
-
-| Main Loop Phase | Remediation Equivalent         |
-| --------------- | ------------------------------ |
-| Discovery       | Issue identified from Review   |
-| Exploration     | Variant hunt (find related)    |
-| Triage          | Prioritize fixes               |
-| Architecture    | Design the fix                 |
-| Implementation  | Apply the fix                  |
-| Review          | Verify the fix                 |
-
-This recursive structure means the same patterns apply at both scales.
-
 ## One-Level Max Nesting
 
 **Critical constraint:** Agents can be spawned by the orchestrator, but agents cannot spawn sub-agents.
@@ -288,18 +369,14 @@ This recursive structure means the same patterns apply at both scales.
 ```
 orchestrator (main command)
     │
-    ├── context-builder ──► returns findings
-    ├── security-analyst ──► returns findings
-    ├── architect ──► returns findings
-    ├── implementer ──► returns code
+    ├── context-builder ──► can ask questions ──► returns findings
+    ├── security-analyst ──► can ask questions ──► returns findings
     └── ... etc
 
 NOT ALLOWED:
     architect
         └── security-analyst (nested spawn)
 ```
-
-This prevents context explosion and keeps the workflow manageable.
 
 ## State Management
 
@@ -321,31 +398,18 @@ All workflow state persists in `.claude/feature-forge/`:
 └── archive/                # Archived session details
 ```
 
-## Completion Criteria
-
-Each phase has explicit completion criteria tracked in `state.json`:
-
-```json
-{
-  "phase": "implementation",
-  "completion_criteria": {
-    "all_features_complete": false,
-    "tests_passing": true,
-    "lint_clean": true,
-    "typecheck_clean": true
-  }
-}
-```
-
-Implementation and Remediation loops only exit when criteria are met OR human intervention is requested.
-
 ## Human as Orchestrating Architect
 
-The human is not just a checkpoint—they are the orchestrating architect:
+The human is not just a checkpoint—they are the orchestrating architect throughout:
 
-- **Provides business context** that AI cannot infer
-- **Makes trade-off decisions** when multiple valid paths exist
-- **Approves direction** before significant investment
-- **Intervenes** when AI encounters uncertainty
+| Role                     | How                                               |
+| ------------------------ | ------------------------------------------------- |
+| **Provides sources**     | Discovery: "Read the RFC at this URL"             |
+| **Clarifies scope**      | Discovery: "Only the auth module, not payments"   |
+| **Guides exploration**   | Exploration: "Check how we did this in service X" |
+| **Makes trade-offs**     | Architecture: "Prefer simplicity over performance"|
+| **Sets risk tolerance**  | Security: "We can accept this risk for v1"        |
+| **Approves direction**   | Checkpoints: "Approved" or "Change X"             |
+| **Dispositions findings**| Review: "Fix now" or "Defer to v1.1"              |
 
-The workflow is designed for human stewardship, not full autonomy.
+The workflow is designed for **human stewardship**, not "set and forget" autonomy.

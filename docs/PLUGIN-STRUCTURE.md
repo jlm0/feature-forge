@@ -544,10 +544,7 @@ feature-forge/
 │       └── precompact-persist.sh  # Persist state before compaction
 │
 ├── scripts/
-│   ├── paths.sh                   # Path utilities for global state
-│   ├── init-workspace.sh          # Creates ~/.claude/feature-forge/projects/<hash>/features/<slug>/
-│   ├── state-manager.sh           # JSON state operations (bash + jq)
-│   └── progress-tracker.sh        # Session handoffs (bash + jq)
+│   └── paths.sh                   # Path utilities for hooks only
 │
 └── README.md
 ```

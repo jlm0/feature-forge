@@ -1,0 +1,13 @@
+{
+  "$schema": "https://claude.ai/schemas/marketplace.json",
+  "name": "feature-forge",
+  "description": "Secure feature development with context building, security analysis, and human checkpoints",
+  "plugins": [
+    {
+      "name": "feature-forge",
+      "version": "1.0.0",
+      "description": "Orchestrated feature development workflow with specialized agents, security-first design, and human approval gates",
+      "repository": "https://github.com/jlm0/feature-forge"
+    }
+  ]
+}

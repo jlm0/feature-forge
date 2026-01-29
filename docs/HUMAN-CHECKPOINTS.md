@@ -31,12 +31,12 @@ With checkpoints:
 
 Feature-Forge has checkpoints at key decision points:
 
-| Checkpoint         | After Phase              | What's Reviewed                   | Typical Decision              |
-| ------------------ | ------------------------ | --------------------------------- | ----------------------------- |
-| **Clarification**  | UNDERSTANDING group      | Ambiguities and questions         | Provide answers               |
-| **Design Triage**  | DESIGN group (each iter) | Architecture + security review    | Approve / Request changes     |
-| **Review**         | Implementation           | Quality & security findings       | Ship / Fix now / Defer        |
-| **Completion**     | Summary                  | Final deliverable                 | Accept / Revise               |
+| Checkpoint        | After Phase              | What's Reviewed                | Typical Decision          |
+| ----------------- | ------------------------ | ------------------------------ | ------------------------- |
+| **Clarification** | UNDERSTANDING group      | Ambiguities and questions      | Provide answers           |
+| **Design Triage** | DESIGN group (each iter) | Architecture + security review | Approve / Request changes |
+| **Review**        | Implementation           | Quality & security findings    | Ship / Fix now / Defer    |
+| **Completion**    | Summary                  | Final deliverable              | Accept / Revise           |
 
 ## Checkpoint Flow
 
@@ -330,13 +330,13 @@ Each checkpoint can have quality gates that must pass:
 
 The human is not a passive approver—they are the orchestrating architect:
 
-| Role                     | What It Means                                      |
-| ------------------------ | -------------------------------------------------- |
-| **Provides context**     | Business requirements AI cannot infer              |
-| **Makes trade-offs**     | Chooses between valid competing approaches         |
-| **Approves direction**   | Ensures work aligns with actual needs              |
-| **Intervenes on uncertainty** | Guides when AI encounters ambiguity           |
-| **Accepts or rejects**   | Final authority on deliverables                    |
+| Role                          | What It Means                              |
+| ----------------------------- | ------------------------------------------ |
+| **Provides context**          | Business requirements AI cannot infer      |
+| **Makes trade-offs**          | Chooses between valid competing approaches |
+| **Approves direction**        | Ensures work aligns with actual needs      |
+| **Intervenes on uncertainty** | Guides when AI encounters ambiguity        |
+| **Accepts or rejects**        | Final authority on deliverables            |
 
 The workflow is designed for human stewardship, not full autonomy. AI executes; humans steer.
 

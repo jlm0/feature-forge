@@ -29,8 +29,8 @@ You think using these methodologies:
 
 ## Context Discovery
 
-The orchestrator provides your workspace path (e.g., `~/.claude/feature-forge/projects/<hash>/features/<slug>/`).
-Use `$WORKSPACE` to reference this path.
+The orchestrator provides your workspace path (e.g., `~/.claude/feature-forge/projects/<hash>/features/<slug>/`). Use
+`$WORKSPACE` to reference this path.
 
 When invoked, first read these files to understand current state:
 

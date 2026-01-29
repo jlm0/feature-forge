@@ -193,47 +193,7 @@ For detailed architecture and design decisions:
 - [Context Persistence](docs/CONTEXT-PERSISTENCE.md) - Memory patterns, Ralph loops
 - [Security Integration](docs/SECURITY-INTEGRATION.md) - Security methodologies
 
-## License
+## Dev Notes
 
-MIT
-
-## Developer Footnotes
-
-I spent the better half of a day building my context of Claude's plugin architecture, agent model, and skill system
-before proceeding with the implementation of Feature-Forge. And yes of course Claude was involved in that process!
-Through multiple full conversation sessions and context compressions we managed to dump and synthesize a significant
-portion of the relevant documentation together and create a docs outline. I also took inspiration from existing plugins
-like "feature-dev" and Trail of Bits skills to understand how others were approaching skill and agent creation. However
-from my perspective the skills and agents needed to implement great features actually required an orchestration that
-went far beyond what those plugins provided. So I designed a new workflow from the ground up that emphasized context
-building, security integration, and human checkpoints.
-
-The mental model I landed on was this: if an Agent is just the equivalent of a worker who has context and tasks to
-perform, and a Skill is a methodology or approach that worker uses to perform their tasks, then the workflow is the
-project plan that organizes how those workers and methodologies interact to deliver the final product. Allow these
-agents to pass their context to each other like coworkers giving handoffs and you can simulate a team working together.
-By breaking the feature development process into distinct phases with clear goals and deliverables, I was able to create
-a structured approach that ensures thoroughness and quality at each step.
-
-Of course as we all know AI still generates AI slop, so incorporating human checkpoints was essential. By no means is
-Feature-Forge a set it and forget it autonomous system. I intentionally want a human at the steering wheel to ensure the
-final deliverables are up to par. And that's what these tools are for - to augment human capabilities, not replace them.
-As a developer you can leverage your own set of "skills" to guide and oversee the work of these agents, ensuring the
-final output aligns with your vision and standards.
-
-After not kidding 7-8 hours of building my own context and reasoning through how workflows work and the loops required,
-doing research on simple context persistence approaches that didn't need a database, and thinking through security
-integration - I felt comfortable to let Claude loose on building Feature-Forge. Testing and refining is still an ongoing
-process , but the core architecture and workflow are solid. The plugin can now guide users through a disciplined feature
-development process that emphasizes understanding, design, execution, and review - all while integrating security
-analysis and maintaining human oversight.Overall I am quite proud of how Feature-Forge turned out and I believe it
-provides a solid foundation for secure feature development using Claude Code plugins.
-
-By no means do I take credit for it in its entirety - Claude was instrumental in helping me reason through the
-architecture, design the workflow, and even write portions of the code. The existing plugins from Anthropic and Trail of
-Bits provided invaluable reference points as well. But I do take pride in having orchestrated the entire process and
-brought it all together into a cohesive whole. I highly recommend other developers take the time to study these existing
-plugins as they embark on their own plugin development journeys. There's a lot to learn from the work others have done
-in this space, and much like no single person has ownership of a skill we can create our own versions inspired by those
-that came before us. I look forward to seeing how others might build upon Feature-Forge and adapt it to their own
-workflows. Happy coding!
+- If "swarms" becomes a feature in Claude code as its meant to be then this workflow is effectively the same. We took
+  Anthorpics idea of of orchestration and json file for managing state and built this plugin around it.

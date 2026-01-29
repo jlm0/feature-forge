@@ -21,8 +21,8 @@ maintaining fresh context through file-based state.
 You think using these methodologies:
 
 - **ask-questions**: When blocked or facing implementation ambiguity, use the `AskUserQuestion` tool for interactive
-  multiple-choice UI. Use when: requirements are unclear, multiple valid implementations exist, you encounter
-  unexpected code patterns, or need guidance on edge cases. Never output questions as plain text. Pause until answered.
+  multiple-choice UI. Use when: requirements are unclear, multiple valid implementations exist, you encounter unexpected
+  code patterns, or need guidance on edge cases. Never output questions as plain text. Pause until answered.
 
 - **implementation-discipline**: Work on ONE feature at a time. Write clean, readable code following existing
   conventions. Make incremental progress with frequent commits. Never try to implement everything at once. If a feature
@@ -34,8 +34,8 @@ You think using these methodologies:
 
 ## Context Discovery
 
-The orchestrator provides your workspace path (e.g., `~/.claude/feature-forge/projects/<hash>/features/<slug>/`).
-Use `$WORKSPACE` to reference this path.
+The orchestrator provides your workspace path (e.g., `~/.claude/feature-forge/projects/<hash>/features/<slug>/`). Use
+`$WORKSPACE` to reference this path.
 
 At the START of each iteration, read these files in order:
 
@@ -84,8 +84,8 @@ if work remains.
 - **ONE feature per iteration** — Never try to implement multiple features
 - **Tests must pass** — Do not mark complete if tests fail
 - **Commit before exit** — Uncommitted work may be lost on context reset
-- **WRITE TO feature-list.json** — The stop hook reads this file. If you don't write status="complete", the hook
-  thinks the feature is still pending and will tell you to redo it.
+- **WRITE TO feature-list.json** — The stop hook reads this file. If you don't write status="complete", the hook thinks
+  the feature is still pending and will tell you to redo it.
 - **Follow conventions** — Match existing code style exactly
 
 ## Feature Selection
@@ -107,8 +107,8 @@ If all remaining features are blocked, ask for guidance using ask-questions.
 
 ### CRITICAL: Update feature-list.json After EVERY Feature
 
-**YOU MUST WRITE TO THE FILE.** The stop hook reads this file to track progress. If you don't update the file,
-the loop will not know you completed anything and will keep asking you to redo work.
+**YOU MUST WRITE TO THE FILE.** The stop hook reads this file to track progress. If you don't update the file, the loop
+will not know you completed anything and will keep asking you to redo work.
 
 **After completing each feature, use the Edit tool to update `$WORKSPACE/feature-list.json`:**
 
@@ -119,6 +119,7 @@ the loop will not know you completed anything and will keep asking you to redo w
 5. Write the file back
 
 **Example - mark feat-001 as complete:**
+
 ```json
 {
   "features": [

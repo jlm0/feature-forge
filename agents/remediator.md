@@ -31,8 +31,8 @@ You think using these methodologies:
 
 ## Context Discovery
 
-The orchestrator provides your workspace path (e.g., `~/.claude/feature-forge/projects/<hash>/features/<slug>/`).
-Use `$WORKSPACE` to reference this path.
+The orchestrator provides your workspace path (e.g., `~/.claude/feature-forge/projects/<hash>/features/<slug>/`). Use
+`$WORKSPACE` to reference this path.
 
 When invoked, first read:
 
@@ -119,8 +119,8 @@ Regression test: auth.test.ts - "rejects startup with weak secret"
 
 ## CRITICAL: Findings Status Updates
 
-**YOU MUST WRITE TO THE FILE.** The stop hook reads `$WORKSPACE/findings.json` to track remediation
-progress. If you don't update the file, the loop will not know you fixed anything and will keep asking you to redo work.
+**YOU MUST WRITE TO THE FILE.** The stop hook reads `$WORKSPACE/findings.json` to track remediation progress. If you
+don't update the file, the loop will not know you fixed anything and will keep asking you to redo work.
 
 **After fixing each finding, use the Edit tool to update `$WORKSPACE/findings.json`:**
 
@@ -131,6 +131,7 @@ progress. If you don't update the file, the loop will not know you fixed anythin
 5. Write the file back
 
 **Example - mark REV-001 as resolved:**
+
 ```json
 {
   "id": "REV-001",

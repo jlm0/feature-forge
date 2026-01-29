@@ -2,7 +2,8 @@
 
 ## Philosophy
 
-Feature-Forge creates its own security skills **inspired by** Trail of Bits methodologies. We adapt their thinking patterns into skills that frame how our agents approach security work.
+Feature-Forge creates its own security skills **inspired by** Trail of Bits methodologies. We adapt their thinking
+patterns into skills that frame how our agents approach security work.
 
 **Key distinction:** We do NOT invoke Trail of Bits plugins. We create our own skills that embody similar methodologies.
 
@@ -10,13 +11,13 @@ Feature-Forge creates its own security skills **inspired by** Trail of Bits meth
 
 Feature-Forge includes five security-focused skills:
 
-| Skill                 | Inspired By                      | Purpose                                        |
-| --------------------- | -------------------------------- | ---------------------------------------------- |
-| **deep-context**      | ToB audit-context-building       | Ultra-granular analysis before vulnerability hunting |
-| **threat-model**      | STRIDE methodology               | Systematic threat enumeration                  |
-| **footgun-detection** | ToB sharp-edges                  | Identify dangerous defaults and API misuse     |
-| **variant-hunt**      | ToB variant-analysis             | Find similar bugs after initial discovery      |
-| **fix-verify**        | ToB fix-review                   | Verify fixes address root cause                |
+| Skill                 | Inspired By                | Purpose                                              |
+| --------------------- | -------------------------- | ---------------------------------------------------- |
+| **deep-context**      | ToB audit-context-building | Ultra-granular analysis before vulnerability hunting |
+| **threat-model**      | STRIDE methodology         | Systematic threat enumeration                        |
+| **footgun-detection** | ToB sharp-edges            | Identify dangerous defaults and API misuse           |
+| **variant-hunt**      | ToB variant-analysis       | Find similar bugs after initial discovery            |
+| **fix-verify**        | ToB fix-review             | Verify fixes address root cause                      |
 
 ## Skill Details
 
@@ -131,21 +132,25 @@ Security skills are used at multiple points in the workflow:
 ### UNDERSTANDING Group
 
 **Security Context Phase:**
+
 - security-analyst uses **deep-context** to build trust boundaries and attack surfaces
 - Produces `security-context.md`
 
 ### DESIGN Group
 
 **Architecture Phase:**
+
 - All design specialists consider security in their domain
 - security-analyst available for consultation
 
 **Security Review Phase:**
+
 - security-analyst uses **footgun-detection** to review architecture
 - Identifies dangerous defaults, API misuse potential
 - Produces `hardening-review.md`
 
 **Triage Phase:**
+
 - security-analyst uses **threat-model** to enumerate threats
 - architect + security-analyst prioritize for v1
 - Produces `triage.json`
@@ -153,10 +158,12 @@ Security skills are used at multiple points in the workflow:
 ### EXECUTION Group
 
 **Review Phase:**
+
 - reviewer (security) uses **deep-context** for thorough analysis
 - Contributes to `findings.json`
 
 **Remediation Phase:**
+
 - remediator uses **variant-hunt** to find related issues
 - remediator uses **fix-verify** to validate fixes
 - Updates `findings.json` with verification status
@@ -218,6 +225,7 @@ severity_low: 1
 [Must fix before implementation]
 
 ### Issue 1: [Title]
+
 - **Risk:** [What could go wrong]
 - **Recommendation:** [How to fix]
 
@@ -335,12 +343,13 @@ EXECUTION
 
 A key design principle: security skills are **reusable tools**, not one-time phases.
 
-| Skill             | Used In                                          |
-| ----------------- | ------------------------------------------------ |
-| deep-context      | Security Context, Review, any deep analysis      |
-| threat-model      | Triage, whenever threats need enumeration        |
-| footgun-detection | Security Review, API design review               |
-| variant-hunt      | Remediation, after any bug discovery             |
-| fix-verify        | Remediation, after any fix implementation        |
+| Skill             | Used In                                     |
+| ----------------- | ------------------------------------------- |
+| deep-context      | Security Context, Review, any deep analysis |
+| threat-model      | Triage, whenever threats need enumeration   |
+| footgun-detection | Security Review, API design review          |
+| variant-hunt      | Remediation, after any bug discovery        |
+| fix-verify        | Remediation, after any fix implementation   |
 
-This means the security-analyst agent can apply these skills whenever the orchestrator determines they're needed, not just at predetermined phases.
+This means the security-analyst agent can apply these skills whenever the orchestrator determines they're needed, not
+just at predetermined phases.

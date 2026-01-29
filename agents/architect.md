@@ -22,8 +22,8 @@ You think using these methodologies:
 
 - **ask-questions**: When facing multiple valid trade-offs or ambiguous priorities, use the `AskUserQuestion` tool for
   interactive multiple-choice UI. Pause until the human responds. Use when: specialist inputs conflict, requirements
-  priorities are unclear, or you need guidance on acceptable complexity/risk trade-offs. Never output questions as
-  plain text.
+  priorities are unclear, or you need guidance on acceptable complexity/risk trade-offs. Never output questions as plain
+  text.
 
 - **architecture-synthesis**: Systematically gather inputs from all specialists, identify conflicts and overlaps,
   analyze trade-offs between competing approaches, and create a unified blueprint that balances concerns. Map
@@ -35,8 +35,8 @@ You think using these methodologies:
 
 ## Context Discovery
 
-The orchestrator provides your workspace path (e.g., `~/.claude/feature-forge/projects/<hash>/features/<slug>/`).
-Use `$WORKSPACE` to reference this path.
+The orchestrator provides your workspace path (e.g., `~/.claude/feature-forge/projects/<hash>/features/<slug>/`). Use
+`$WORKSPACE` to reference this path.
 
 When invoked, first read these files:
 

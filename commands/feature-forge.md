@@ -31,14 +31,17 @@ Feature-Forge uses **global state** stored in `~/.claude/feature-forge/`:
 **You compute paths directly - no scripts needed.**
 
 ### Project Hash
+
 ```
 1. Get absolute project path (from CLAUDE_PROJECT_DIR or pwd)
 2. SHA256 hash it
 3. Take first 12 characters
 ```
+
 Example: `/Users/dev/myapp` → SHA256 → `a1b2c3d4e5f6`
 
 ### Feature Slug
+
 ```
 1. Take feature description
 2. Lowercase
@@ -46,9 +49,11 @@ Example: `/Users/dev/myapp` → SHA256 → `a1b2c3d4e5f6`
 4. Remove consecutive hyphens
 5. Trim to 50 chars
 ```
+
 Example: `"Add User Authentication"` → `add-user-authentication`
 
 ### Workspace Path
+
 ```
 ~/.claude/feature-forge/projects/<project-hash>/features/<feature-slug>/
 ```
@@ -63,6 +68,7 @@ Example: `"Add User Authentication"` → `add-user-authentication`
 - **List features**: Use `Glob` tool on `~/.claude/feature-forge/projects/*/features/*/state.json`
 
 **Only use Bash for:**
+
 - Git operations (`git checkout`, `git status`, `git log`)
 - Directory deletion (`rm -rf` for cleanup)
 
@@ -120,22 +126,26 @@ Example: `"Add User Authentication"` → `add-user-authentication`
 3. If nothing to clean: "No completed, cancelled, or stale features to clean up."
 
 4. Otherwise, use `AskUserQuestion` with multi-select:
+
    ```json
    {
-     "questions": [{
-       "question": "Which features would you like to clean up?",
-       "header": "Cleanup",
-       "multiSelect": true,
-       "options": [
-         {"label": "add-dark-mode (cancelled)", "description": "Cancelled 12 days ago. Delete workspace."},
-         {"label": "fix-payment-bug (complete)", "description": "Completed 5 days ago. Delete workspace."},
-         {"label": "None", "description": "Cancel cleanup, keep all features."}
-       ]
-     }]
+     "questions": [
+       {
+         "question": "Which features would you like to clean up?",
+         "header": "Cleanup",
+         "multiSelect": true,
+         "options": [
+           { "label": "add-dark-mode (cancelled)", "description": "Cancelled 12 days ago. Delete workspace." },
+           { "label": "fix-payment-bug (complete)", "description": "Completed 5 days ago. Delete workspace." },
+           { "label": "None", "description": "Cancel cleanup, keep all features." }
+         ]
+       }
+     ]
    }
    ```
 
 5. For selected features, use Bash to delete:
+
    ```bash
    rm -rf ~/.claude/feature-forge/projects/<hash>/features/<slug>
    ```
@@ -171,9 +181,11 @@ Example: `"Add User Authentication"` → `add-user-authentication`
    - If found, offer cleanup via `AskUserQuestion`
 
 2. **Check git status**:
+
    ```bash
    git status --porcelain
    ```
+
    If changes, warn and ask to proceed or stash.
 
 3. **Compute paths**:
@@ -182,6 +194,7 @@ Example: `"Add User Authentication"` → `add-user-authentication`
    - Workspace = `~/.claude/feature-forge/projects/<hash>/features/<slug>/`
 
 4. **Create project.json** (if doesn't exist) using `Write`:
+
    ```json
    {
      "path": "/absolute/path/to/project",
@@ -192,6 +205,7 @@ Example: `"Add User Authentication"` → `add-user-authentication`
    ```
 
 5. **Create state.json** using `Write`:
+
    ```json
    {
      "feature": "Add user authentication",
@@ -211,6 +225,7 @@ Example: `"Add User Authentication"` → `add-user-authentication`
    ```
 
 6. **Create progress.json** using `Write`:
+
    ```json
    {
      "sessions": [],
@@ -222,22 +237,24 @@ Example: `"Add User Authentication"` → `add-user-authentication`
    ```
 
 7. **Create feature-list.json** using `Write`:
+
    ```json
-   {"features": []}
+   { "features": [] }
    ```
 
 8. **Create findings.json** using `Write`:
+
    ```json
-   {"findings": []}
+   { "findings": [] }
    ```
 
 9. **Create feature branch**:
+
    ```bash
    git checkout -b feature/<slug>
    ```
 
-10. **Update state.json** with branch using `Edit`:
-    Change `"branch": ""` to `"branch": "feature/<slug>"`
+10. **Update state.json** with branch using `Edit`: Change `"branch": ""` to `"branch": "feature/<slug>"`
 
 11. Proceed to UNDERSTANDING group.
 
@@ -248,6 +265,7 @@ Example: `"Add User Authentication"` → `add-user-authentication`
 **All state updates use the Edit tool directly.**
 
 Example - update phase after discovery:
+
 ```
 Use Edit tool on $WORKSPACE/state.json:
 - old_string: "phase": "discovery"
@@ -259,6 +277,7 @@ Also update last_activity:
 ```
 
 **Timestamps to maintain:**
+
 - `last_activity`: After every phase transition
 - `completed_at`: When user accepts at COMPLETION
 - `cancelled_at`: When user cancels at any checkpoint
@@ -267,8 +286,8 @@ Also update last_activity:
 
 ## Workflow Execution
 
-**Before each phase:** Read `$WORKSPACE/state.json` to confirm group/phase.
-**After each phase:** Use `Edit` to update state.json with new phase and timestamp.
+**Before each phase:** Read `$WORKSPACE/state.json` to confirm group/phase. **After each phase:** Use `Edit` to update
+state.json with new phase and timestamp.
 
 ### UNDERSTANDING Group
 
@@ -328,20 +347,23 @@ Present comprehensive architecture context, then use `AskUserQuestion`:
 
 ```json
 {
-  "questions": [{
-    "question": "Do you approve this architecture for implementation?",
-    "header": "Approval",
-    "multiSelect": false,
-    "options": [
-      {"label": "Approve", "description": "Proceed to implementation."},
-      {"label": "Iterate", "description": "Need design changes."},
-      {"label": "Cancel", "description": "Stop workflow entirely."}
-    ]
-  }]
+  "questions": [
+    {
+      "question": "Do you approve this architecture for implementation?",
+      "header": "Approval",
+      "multiSelect": false,
+      "options": [
+        { "label": "Approve", "description": "Proceed to implementation." },
+        { "label": "Iterate", "description": "Need design changes." },
+        { "label": "Cancel", "description": "Stop workflow entirely." }
+      ]
+    }
+  ]
 }
 ```
 
 **Handle response:**
+
 - **Approve**: Edit state.json → `approvals.triage = true`, `group = "execution"`, `phase = "implementation"`
 - **Iterate**: If `design_iteration < 2`, increment it, reset `phase = "architecture"`
 - **Cancel**: Edit state.json → `status = "cancelled"`, `cancelled_at = <now>`
@@ -367,6 +389,7 @@ Present comprehensive architecture context, then use `AskUserQuestion`:
 Present findings, use `AskUserQuestion` for disposition of each.
 
 Route:
+
 - All clean/deferred: Edit → `phase = "summary"`
 - Items to fix: Edit → `phase = "remediation"`
 
@@ -390,15 +413,17 @@ Present final summary, use `AskUserQuestion`:
 
 ```json
 {
-  "questions": [{
-    "question": "Do you accept this feature as complete?",
-    "header": "Accept",
-    "multiSelect": false,
-    "options": [
-      {"label": "Accept", "description": "Ready for PR/merge."},
-      {"label": "Request Changes", "description": "Need more work."}
-    ]
-  }]
+  "questions": [
+    {
+      "question": "Do you accept this feature as complete?",
+      "header": "Accept",
+      "multiSelect": false,
+      "options": [
+        { "label": "Accept", "description": "Ready for PR/merge." },
+        { "label": "Request Changes", "description": "Need more work." }
+      ]
+    }
+  ]
 }
 ```
 
@@ -407,17 +432,20 @@ Present final summary, use `AskUserQuestion`:
 1. Edit state.json → `status = "complete"`, `completed_at = <now>`
 
 2. Offer cleanup:
+
    ```json
    {
-     "questions": [{
-       "question": "Clean up feature state?",
-       "header": "Cleanup",
-       "multiSelect": false,
-       "options": [
-         {"label": "Delete now", "description": "Remove workspace. Git branch remains."},
-         {"label": "Keep for now", "description": "Use /feature-forge cleanup later."}
-       ]
-     }]
+     "questions": [
+       {
+         "question": "Clean up feature state?",
+         "header": "Cleanup",
+         "multiSelect": false,
+         "options": [
+           { "label": "Delete now", "description": "Remove workspace. Git branch remains." },
+           { "label": "Keep for now", "description": "Use /feature-forge cleanup later." }
+         ]
+       }
+     ]
    }
    ```
 
@@ -433,5 +461,5 @@ Present final summary, use `AskUserQuestion`:
 
 ## Context Management
 
-**On resume:** Read state.json, identify position, continue.
-**Before compaction:** Ensure state.json current, commit pending work.
+**On resume:** Read state.json, identify position, continue. **Before compaction:** Ensure state.json current, commit
+pending work.

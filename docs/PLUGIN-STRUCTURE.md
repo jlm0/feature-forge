@@ -57,26 +57,26 @@ Skills are **methodologies** that frame how agents think. They are pre-loaded in
 
 ### Skill = How (Methodology)
 
-| Skill                       | Purpose                              | Methodology                                     |
-| --------------------------- | ------------------------------------ | ----------------------------------------------- |
-| **ask-questions**           | Clarify before acting                | Minimum questions, multiple-choice, pause until answered |
-| **code-exploration**        | Trace code, map architecture         | Entry points → call chains → dependencies       |
-| **docs-research**           | Read and digest external docs        | Identify sources → extract patterns → synthesize |
-| **deep-context**            | Ultra-granular code analysis         | Line-by-line, First Principles, 5 Whys          |
-| **threat-model**            | Security threat enumeration          | STRIDE, actor mapping, trust boundaries         |
-| **footgun-detection**       | API misuse and dangerous defaults    | Adversary modeling, edge case probing           |
-| **variant-hunt**            | Find similar issues                  | Start specific → generalize → stop at 50% FP    |
-| **fix-verify**              | Verify fixes address root cause      | Differential analysis, regression detection     |
-| **differential-review**     | Security-focused code review         | Risk-based triage, adaptive depth, blast radius |
-| **ui-ux-design**            | Visual design and UX                 | User flows, interaction patterns, accessibility |
-| **frontend-engineering**    | Frontend technical implementation    | State management, components, data fetching     |
-| **api-design**              | API contract design                  | REST/GraphQL conventions, versioning            |
-| **data-modeling**           | Database and schema design           | Relationships, normalization, migrations        |
-| **architecture-synthesis**  | System design from multiple inputs   | Trade-off analysis, blueprint creation          |
-| **implementation-discipline** | Writing production code            | Clean code, conventions, incremental progress   |
-| **testing-methodology**     | How to verify correctness            | Test selection, coverage, edge cases            |
-| **code-review**             | Evaluate code quality                | Bug patterns, convention adherence              |
-| **triage**                  | Prioritization decisions             | Impact, urgency, risk assessment                |
+| Skill                         | Purpose                            | Methodology                                              |
+| ----------------------------- | ---------------------------------- | -------------------------------------------------------- |
+| **ask-questions**             | Clarify before acting              | Minimum questions, multiple-choice, pause until answered |
+| **code-exploration**          | Trace code, map architecture       | Entry points → call chains → dependencies                |
+| **docs-research**             | Read and digest external docs      | Identify sources → extract patterns → synthesize         |
+| **deep-context**              | Ultra-granular code analysis       | Line-by-line, First Principles, 5 Whys                   |
+| **threat-model**              | Security threat enumeration        | STRIDE, actor mapping, trust boundaries                  |
+| **footgun-detection**         | API misuse and dangerous defaults  | Adversary modeling, edge case probing                    |
+| **variant-hunt**              | Find similar issues                | Start specific → generalize → stop at 50% FP             |
+| **fix-verify**                | Verify fixes address root cause    | Differential analysis, regression detection              |
+| **differential-review**       | Security-focused code review       | Risk-based triage, adaptive depth, blast radius          |
+| **ui-ux-design**              | Visual design and UX               | User flows, interaction patterns, accessibility          |
+| **frontend-engineering**      | Frontend technical implementation  | State management, components, data fetching              |
+| **api-design**                | API contract design                | REST/GraphQL conventions, versioning                     |
+| **data-modeling**             | Database and schema design         | Relationships, normalization, migrations                 |
+| **architecture-synthesis**    | System design from multiple inputs | Trade-off analysis, blueprint creation                   |
+| **implementation-discipline** | Writing production code            | Clean code, conventions, incremental progress            |
+| **testing-methodology**       | How to verify correctness          | Test selection, coverage, edge cases                     |
+| **code-review**               | Evaluate code quality              | Bug patterns, convention adherence                       |
+| **triage**                    | Prioritization decisions           | Impact, urgency, risk assessment                         |
 
 ### SKILL.md Structure
 
@@ -131,18 +131,18 @@ Agents are **domain-specific actors** with isolated context windows. They are li
 
 All agents have the **ask-questions** skill pre-loaded for human interaction.
 
-| Agent                | Role                          | Pre-loaded Skills                                                                      | Tools                                 |
-| -------------------- | ----------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------- |
-| **context-builder**  | Explore codebase and docs     | ask-questions, code-exploration, docs-research                                         | Read, Grep, Glob, WebSearch, WebFetch |
-| **security-analyst** | Security analysis             | ask-questions, deep-context, threat-model, footgun-detection, variant-hunt, fix-verify | Read, Grep, Glob                      |
-| **ui-ux-designer**   | Visual and interaction design | ask-questions, ui-ux-design                                                            | Read, Grep, Glob, WebFetch            |
-| **frontend-engineer**| Frontend technical design     | ask-questions, frontend-engineering                                                    | Read, Grep, Glob                      |
-| **api-designer**     | API contract design           | ask-questions, api-design                                                              | Read, Grep, Glob                      |
-| **data-modeler**     | Database schema design        | ask-questions, data-modeling                                                           | Read, Grep, Glob                      |
-| **architect**        | Synthesize into blueprint     | ask-questions, architecture-synthesis, triage                                          | Read, Grep, Glob                      |
-| **implementer**      | Write production code         | ask-questions, implementation-discipline, testing-methodology                          | Read, Write, Edit, Bash, Grep, Glob   |
-| **reviewer**         | Evaluate implementation       | ask-questions, code-review, deep-context, differential-review                          | Read, Grep, Glob, Bash                |
-| **remediator**       | Fix identified issues         | ask-questions, implementation-discipline, testing-methodology, fix-verify              | Read, Write, Edit, Bash, Grep, Glob   |
+| Agent                 | Role                          | Pre-loaded Skills                                                                      | Tools                                 |
+| --------------------- | ----------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------- |
+| **context-builder**   | Explore codebase and docs     | ask-questions, code-exploration, docs-research                                         | Read, Grep, Glob, WebSearch, WebFetch |
+| **security-analyst**  | Security analysis             | ask-questions, deep-context, threat-model, footgun-detection, variant-hunt, fix-verify | Read, Grep, Glob                      |
+| **ui-ux-designer**    | Visual and interaction design | ask-questions, ui-ux-design                                                            | Read, Grep, Glob, WebFetch            |
+| **frontend-engineer** | Frontend technical design     | ask-questions, frontend-engineering                                                    | Read, Grep, Glob                      |
+| **api-designer**      | API contract design           | ask-questions, api-design                                                              | Read, Grep, Glob                      |
+| **data-modeler**      | Database schema design        | ask-questions, data-modeling                                                           | Read, Grep, Glob                      |
+| **architect**         | Synthesize into blueprint     | ask-questions, architecture-synthesis, triage                                          | Read, Grep, Glob                      |
+| **implementer**       | Write production code         | ask-questions, implementation-discipline, testing-methodology                          | Read, Write, Edit, Bash, Grep, Glob   |
+| **reviewer**          | Evaluate implementation       | ask-questions, code-review, deep-context, differential-review                          | Read, Grep, Glob, Bash                |
+| **remediator**        | Fix identified issues         | ask-questions, implementation-discipline, testing-methodology, fix-verify              | Read, Write, Edit, Bash, Grep, Glob   |
 
 ### Agent Structure
 
@@ -187,11 +187,11 @@ When invoked, first read:
 
 ### Agent Tool Categories
 
-| Agent Type           | Tools                                 | Purpose                    |
-| -------------------- | ------------------------------------- | -------------------------- |
-| Read-only (analysts) | Read, Grep, Glob                      | Examine without changing   |
-| Research (builders)  | Read, Grep, Glob, WebSearch, WebFetch | Explore code and docs      |
-| Writers (coders)     | Read, Write, Edit, Bash, Grep, Glob   | Implement changes          |
+| Agent Type           | Tools                                 | Purpose                  |
+| -------------------- | ------------------------------------- | ------------------------ |
+| Read-only (analysts) | Read, Grep, Glob                      | Examine without changing |
+| Research (builders)  | Read, Grep, Glob, WebSearch, WebFetch | Explore code and docs    |
+| Writers (coders)     | Read, Write, Edit, Bash, Grep, Glob   | Implement changes        |
 
 ### Agent Best Practices
 
@@ -317,15 +317,16 @@ The Stop hook intercepts session exit to implement iterative loops:
 
 ## Hooks
 
-Hooks are event-driven automation scripts that execute in response to Claude Code events. Feature-Forge uses hooks for Ralph loops and session continuity.
+Hooks are event-driven automation scripts that execute in response to Claude Code events. Feature-Forge uses hooks for
+Ralph loops and session continuity.
 
 ### Hook Events Feature-Forge Needs
 
-| Hook Event      | When Fires                    | Feature-Forge Use                                |
-| --------------- | ----------------------------- | ------------------------------------------------ |
-| **SessionStart**| Session begins                | Load state.json, identify current phase, resume  |
-| **Stop**        | Agent wants to stop           | Ralph loops: check completion, feed back prompt  |
-| **PreCompact**  | Before context compaction     | **Critical:** Persist state before tokens cleared |
+| Hook Event       | When Fires                | Feature-Forge Use                                 |
+| ---------------- | ------------------------- | ------------------------------------------------- |
+| **SessionStart** | Session begins            | Load state.json, identify current phase, resume   |
+| **Stop**         | Agent wants to stop       | Ralph loops: check completion, feed back prompt   |
+| **PreCompact**   | Before context compaction | **Critical:** Persist state before tokens cleared |
 
 **Note:** SubagentStop is not used—the orchestrator handles state updates inline after each agent returns.
 
@@ -334,11 +335,13 @@ Hooks are event-driven automation scripts that execute in response to Claude Cod
 **Purpose:** Initialize workflow state when a session begins.
 
 **Behavior:**
+
 1. Check for existing features in `~/.claude/feature-forge/projects/<hash>/features/`
 2. If exists: Show active features, load current phase
 3. If none: Silent (workspace created on first `/feature-forge` command)
 
 State is stored globally to allow:
+
 - Multiple features per project without collision
 - Multiple projects without collision
 - Parallel development in separate terminal sessions
@@ -350,6 +353,7 @@ State is stored globally to allow:
 **Purpose:** Enable iterative implementation and remediation loops.
 
 **Behavior:**
+
 1. Agent attempts to stop
 2. Hook reads state.json and feature-list.json (or findings.json)
 3. Checks completion criteria:
@@ -360,6 +364,7 @@ State is stored globally to allow:
 5. If complete: Allow exit, proceed to next phase
 
 **Output format to continue loop:**
+
 ```json
 {
   "decision": "block",
@@ -375,6 +380,7 @@ State is stored globally to allow:
 **Purpose:** Persist all state before context compaction.
 
 **Behavior:**
+
 1. Context approaching token limit
 2. Hook fires before compaction
 3. Must update:
@@ -388,6 +394,7 @@ State is stored globally to allow:
 **Why critical:** Without this, long-running sessions lose progress when tokens run out.
 
 **PreCompact checklist:**
+
 - [ ] state.json reflects current phase
 - [ ] progress.json has session notes
 - [ ] feature-list.json or findings.json is current
@@ -439,14 +446,15 @@ AT ANY POINT (token limit approaching)
 
 ### Hook Types
 
-Feature-Forge hooks will likely be **prompt-based** (LLM-driven) for complex logic and **command-based** (bash scripts) for deterministic checks:
+Feature-Forge hooks will likely be **prompt-based** (LLM-driven) for complex logic and **command-based** (bash scripts)
+for deterministic checks:
 
-| Hook            | Type    | Why                                              |
-| --------------- | ------- | ------------------------------------------------ |
-| SessionStart    | Command | Fast, deterministic state loading                |
-| Stop            | Prompt  | Complex completion checking, context-aware       |
-| SubagentStop    | Command | Deterministic result processing                  |
-| PreCompact      | Prompt  | Needs to understand what to persist              |
+| Hook         | Type    | Why                                        |
+| ------------ | ------- | ------------------------------------------ |
+| SessionStart | Command | Fast, deterministic state loading          |
+| Stop         | Prompt  | Complex completion checking, context-aware |
+| SubagentStop | Command | Deterministic result processing            |
+| PreCompact   | Prompt  | Needs to understand what to persist        |
 
 ### hooks.json Structure
 
@@ -551,12 +559,12 @@ feature-forge/
 
 ## Key Distinctions
 
-| Concept   | Answers | Example                                       |
-| --------- | ------- | --------------------------------------------- |
-| **Agent** | Who?    | "The security analyst examines the code"      |
-| **Skill** | How?    | "Using threat modeling methodology (STRIDE)"  |
-| **Phase** | When?   | "During the Design group"                     |
-| **Tool**  | With?   | "Using Read, Grep, Glob to explore"           |
+| Concept   | Answers | Example                                      |
+| --------- | ------- | -------------------------------------------- |
+| **Agent** | Who?    | "The security analyst examines the code"     |
+| **Skill** | How?    | "Using threat modeling methodology (STRIDE)" |
+| **Phase** | When?   | "During the Design group"                    |
+| **Tool**  | With?   | "Using Read, Grep, Glob to explore"          |
 
 ## Token Budget
 
@@ -572,11 +580,11 @@ feature-forge/
 
 ## Anti-Patterns
 
-| Anti-Pattern             | Problem               | Solution                        |
-| ------------------------ | --------------------- | ------------------------------- |
-| Skill-less agents        | No methodology        | Every agent needs skills        |
-| Nested agent spawning    | Context explosion     | 1-level max nesting             |
-| Verbose explanations     | Wastes context        | Concise methodology examples    |
-| Too many agents          | Routing confusion     | 10 domain-specific actors       |
-| Vague descriptions       | Won't auto-trigger    | "MUST BE USED for..."           |
-| No context discovery     | Agents start fresh    | Include file reading steps      |
+| Anti-Pattern          | Problem            | Solution                     |
+| --------------------- | ------------------ | ---------------------------- |
+| Skill-less agents     | No methodology     | Every agent needs skills     |
+| Nested agent spawning | Context explosion  | 1-level max nesting          |
+| Verbose explanations  | Wastes context     | Concise methodology examples |
+| Too many agents       | Routing confusion  | 10 domain-specific actors    |
+| Vague descriptions    | Won't auto-trigger | "MUST BE USED for..."        |
+| No context discovery  | Agents start fresh | Include file reading steps   |

@@ -1,14 +1,18 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "feature-forge",
+  "version": "1.0.0",
+  "description": "Secure feature development plugin for Claude Code",
   "owner": {
     "name": "jlm0"
   },
   "plugins": [
     {
       "name": "feature-forge",
-      "source": ".",
       "description": "Secure feature development with context building, security analysis, and human checkpoints",
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "source": "./",
+      "category": "development"
     }
   ]
 }

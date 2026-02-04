@@ -10,6 +10,7 @@ model: inherit
 color: cyan
 tools: ["Read", "Grep", "Glob", "WebSearch", "WebFetch"]
 disallowedTools: ["Write", "Edit", "Bash"]
+permissionMode: bypassPermissions
 skills:
   - ask-questions
   - code-exploration

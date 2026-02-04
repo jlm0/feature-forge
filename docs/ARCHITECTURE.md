@@ -185,18 +185,30 @@ Inspired by Trail of Bits' differential-review skill. Used in Review phase.
 
 All agents have access to the `ask-questions` skill for human interaction.
 
-| Agent                 | Role                          | Pre-loaded Skills                                                                      | Tools                                 |
-| --------------------- | ----------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------- |
-| **context-builder**   | Explore codebase and docs     | ask-questions, code-exploration, docs-research                                         | Read, Grep, Glob, WebSearch, WebFetch |
-| **security-analyst**  | Security analysis             | ask-questions, deep-context, threat-model, footgun-detection, variant-hunt, fix-verify | Read, Grep, Glob                      |
-| **ui-ux-designer**    | Visual and interaction design | ask-questions, ui-ux-design                                                            | Read, Grep, Glob, WebFetch            |
-| **frontend-engineer** | Frontend technical design     | ask-questions, frontend-engineering                                                    | Read, Grep, Glob                      |
-| **api-designer**      | API contract design           | ask-questions, api-design                                                              | Read, Grep, Glob                      |
-| **data-modeler**      | Database schema design        | ask-questions, data-modeling                                                           | Read, Grep, Glob                      |
-| **architect**         | Synthesize into blueprint     | ask-questions, architecture-synthesis, triage                                          | Read, Grep, Glob                      |
-| **implementer**       | Write production code         | ask-questions, implementation-discipline, testing-methodology                          | Read, Write, Edit, Bash, Grep, Glob   |
-| **reviewer**          | Evaluate implementation       | ask-questions, code-review, deep-context, differential-review                          | Read, Grep, Glob, Bash                |
-| **remediator**        | Fix identified issues         | ask-questions, implementation-discipline, testing-methodology, fix-verify              | Read, Write, Edit, Bash, Grep, Glob   |
+| Agent                 | Role                          | Tools                                 | Permission Mode     |
+| --------------------- | ----------------------------- | ------------------------------------- | ------------------- |
+| **context-builder**   | Explore codebase and docs     | Read, Grep, Glob, WebSearch, WebFetch | bypassPermissions   |
+| **security-analyst**  | Security analysis             | Read, Grep, Glob                      | bypassPermissions   |
+| **ui-ux-designer**    | Visual and interaction design | Read, Grep, Glob, WebFetch            | bypassPermissions   |
+| **frontend-engineer** | Frontend technical design     | Read, Grep, Glob                      | bypassPermissions   |
+| **api-designer**      | API contract design           | Read, Grep, Glob                      | bypassPermissions   |
+| **data-modeler**      | Database schema design        | Read, Grep, Glob                      | bypassPermissions   |
+| **architect**         | Synthesize into blueprint     | Read, Grep, Glob                      | bypassPermissions   |
+| **implementer**       | Write production code         | Read, Write, Edit, Bash, Grep, Glob   | acceptEdits         |
+| **reviewer**          | Evaluate implementation       | Read, Grep, Glob, Bash                | bypassPermissions   |
+| **remediator**        | Fix identified issues         | Read, Write, Edit, Bash, Grep, Glob   | acceptEdits         |
+
+### Permission Model
+
+Agents use different permission modes based on their role:
+
+- **bypassPermissions**: Read-only agents run autonomously without prompts. They can search, fetch, and explore freely. Human input happens at checkpoints, not during tool execution.
+- **acceptEdits**: Write-capable agents auto-accept file edits but may prompt for sensitive Bash commands.
+
+This design ensures:
+1. Discovery and design phases flow without interruption
+2. User provides input at meaningful checkpoints (clarification, triage, review)
+3. Implementation has guardrails for destructive operations
 
 ## Phase Groups
 

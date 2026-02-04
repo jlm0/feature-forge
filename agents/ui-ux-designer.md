@@ -7,6 +7,7 @@ model: inherit
 color: magenta
 tools: ["Read", "Grep", "Glob", "WebFetch"]
 disallowedTools: ["Write", "Edit", "Bash"]
+permissionMode: bypassPermissions
 skills:
   - ask-questions
   - ui-ux-design

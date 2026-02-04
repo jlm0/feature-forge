@@ -10,6 +10,7 @@ model: inherit
 color: red
 tools: ["Read", "Grep", "Glob"]
 disallowedTools: ["Write", "Edit", "Bash"]
+permissionMode: bypassPermissions
 skills:
   - ask-questions
   - deep-context

@@ -7,6 +7,7 @@ model: inherit
 color: yellow
 tools: ["Read", "Grep", "Glob"]
 disallowedTools: ["Write", "Edit", "Bash"]
+permissionMode: bypassPermissions
 skills:
   - ask-questions
   - data-modeling

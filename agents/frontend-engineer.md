@@ -7,6 +7,7 @@ model: inherit
 color: blue
 tools: ["Read", "Grep", "Glob"]
 disallowedTools: ["Write", "Edit", "Bash"]
+permissionMode: bypassPermissions
 skills:
   - ask-questions
   - frontend-engineering

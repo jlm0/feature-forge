@@ -212,7 +212,7 @@ Example: `"Add User Authentication"` → `add-user-authentication`
      "slug": "add-user-authentication",
      "branch": "",
      "group": "understanding",
-     "phase": "discovery",
+     "phase": "context-input",
      "status": "pending",
      "iteration": 0,
      "design_iteration": 0,
@@ -293,8 +293,37 @@ state.json with new phase and timestamp.
 
 **Entry condition:** `state.group = "understanding"`
 
+0. **Context Input Checkpoint** (`phase = "context-input"`)
+
+   Before automated exploration, ask the user if they have context to share:
+
+   ```json
+   {
+     "questions": [
+       {
+         "question": "Is there specific context you want me to look at?",
+         "header": "Context",
+         "multiSelect": true,
+         "options": [
+           { "label": "Specific files/areas", "description": "I'll point you to relevant files or directories" },
+           { "label": "External resources", "description": "I have docs, specs, or URLs to share" },
+           { "label": "Explore automatically", "description": "Run discovery and exploration as usual" }
+         ]
+       }
+     ]
+   }
+   ```
+
+   **Handle response:**
+   - **Specific files/areas**: Ask follow-up "Which files or directories should I focus on?" then incorporate into discovery
+   - **External resources**: Ask "What resources should I review?" (URLs, file paths), fetch/read them, save to `$WORKSPACE/user-context.md`
+   - **Explore automatically**: Proceed with standard discovery
+
+   **On complete:** Edit state.json → `phase = "discovery"`
+
 1. **Discovery Phase** (`phase = "discovery"`)
    - Spawn `context-builder` agent with task: "discovery"
+   - If `$WORKSPACE/user-context.md` exists, include it as input
    - Output: `$WORKSPACE/discovery.md`
    - **On complete:** Edit state.json → `phase = "exploration"`
 

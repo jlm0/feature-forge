@@ -119,7 +119,7 @@ Apply triage methodology:
 
 ## Output Format
 
-Create two files:
+Create three files:
 
 ### `$WORKSPACE/architecture.md`
 
@@ -169,6 +169,8 @@ Create two files:
 
 ### `$WORKSPACE/triage.json`
 
+Scope decisions and rationale (used at TRIAGE checkpoint):
+
 ```json
 {
   "v1_scope": {
@@ -200,14 +202,58 @@ Create two files:
 }
 ```
 
+### `$WORKSPACE/feature-list.json`
+
+Implementation tracking (used by implementer Ralph loop). Created from `must_have` + `should_have` features:
+
+```json
+{
+  "features": [
+    {
+      "id": "feat-001",
+      "description": "Detailed implementation task description",
+      "priority": 1,
+      "status": "pending",
+      "blocked_by": [],
+      "acceptance_criteria": [
+        "Specific testable criterion 1",
+        "Specific testable criterion 2"
+      ]
+    },
+    {
+      "id": "feat-002",
+      "description": "Second implementation task",
+      "priority": 2,
+      "status": "pending",
+      "blocked_by": ["feat-001"],
+      "acceptance_criteria": ["..."]
+    }
+  ],
+  "summary": {
+    "total": 8,
+    "complete": 0,
+    "in_progress": 0,
+    "pending": 8
+  }
+}
+```
+
+**Task Breakdown Guidelines:**
+- Each feature should be implementable in one iteration (1-2 hours of work)
+- If a feature is too large, break it into sub-features (feat-001a, feat-001b)
+- Include clear acceptance criteria so implementer knows when done
+- Order by dependency (blocked_by) and priority
+- Description should be actionable: "Implement X" not "X functionality"
+
 ## Completion
 
 When finished:
 
 1. Verify architecture.md addresses all specialist inputs
-2. Verify triage.json has clear v1 scope
-3. Ensure no unresolved conflicts remain
-4. Update state.json to indicate architecture phase complete
-5. Report summary of key decisions and any items needing human approval
+2. Verify triage.json has clear v1 scope with rationale
+3. Verify feature-list.json has actionable tasks with acceptance criteria
+4. Ensure no unresolved conflicts remain
+5. Update state.json to indicate architecture phase complete
+6. Report summary of key decisions and any items needing human approval
 
 The orchestrator will present your architecture for human approval at the TRIAGE checkpoint.

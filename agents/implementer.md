@@ -66,24 +66,23 @@ if work remains.
 5. RUN tests and ensure passing
    - All tests must pass before proceeding
    - Fix any failures before continuing
-6. COMMIT with descriptive message
-   - Use conventional commit format
-   - Reference feature ID in message
-7. UPDATE feature-list.json FILE (MANDATORY)
+6. UPDATE feature-list.json FILE (MANDATORY)
    - Use Edit tool to modify `$WORKSPACE/feature-list.json`
    - Change completed feature status: "pending" → "complete"
    - Stop hook reads this file - if you skip this, loop breaks
-8. EXIT iteration
+7. EXIT iteration
    - Stop hook checks feature-list.json for completion
    - If more features pending: loop continues
    - If all complete AND tests pass: proceed to Review
 ```
 
+**Note:** Do NOT commit after each feature. All commits happen after review/remediation is complete. This keeps git history clean and atomic.
+
 ### Critical Rules
 
 - **ONE feature per iteration** — Never try to implement multiple features
 - **Tests must pass** — Do not mark complete if tests fail
-- **Commit before exit** — Uncommitted work may be lost on context reset
+- **NO commits during implementation** — Commits happen after review, not per-feature
 - **WRITE TO feature-list.json** — The stop hook reads this file. If you don't write status="complete", the hook thinks
   the feature is still pending and will tell you to redo it.
 - **Follow conventions** — Match existing code style exactly
@@ -130,7 +129,6 @@ will not know you completed anything and will keep asking you to redo work.
       "status": "complete",
       "blocked_by": [],
       "implemented_at": "2026-01-22T15:30:00Z",
-      "commit": "abc1234",
       "tests": {
         "written": true,
         "passing": true,
@@ -154,18 +152,6 @@ will not know you completed anything and will keep asking you to redo work.
     "pending": 6
   }
 }
-```
-
-### Commit Message Format
-
-```
-feat(auth): implement JWT token validation
-
-- Add validateToken middleware
-- Handle expired token errors
-- Add unit tests for token validation
-
-Implements feat-001
 ```
 
 ## Handling Blockers
@@ -218,7 +204,7 @@ The Stop hook watches for this signal. Without it, the loop continues indefinite
 
 - **Implementing multiple features** — You will lose context and create bugs
 - **Skipping tests** — Untested code will fail in review
-- **Not committing** — Work is lost on context reset
+- **Committing per-feature** — Wait until after review for clean history
 - **Forgetting feature-list.json** — Loop loses track of progress
 - **Premature DONE signal** — Only when truly complete
 - **Large features without breakdown** — Ask to split into sub-features
@@ -245,10 +231,6 @@ Writing tests...
 Running tests...
 $ npm test
 > All tests passing
-
-Committing...
-$ git add src/auth/reset.ts src/auth/reset.test.ts
-$ git commit -m "feat(auth): add password reset endpoint..."
 
 Updating feature-list.json...
 - feat-003 status: "complete"

@@ -236,10 +236,10 @@ Example: `"Add User Authentication"` → `add-user-authentication`
    }
    ```
 
-7. **Create feature-list.json** using `Write`:
+7. **Create feature-list.json** using `Write` (placeholder - architect populates during synthesis):
 
    ```json
-   { "features": [] }
+   { "features": [], "summary": { "total": 0, "complete": 0, "in_progress": 0, "pending": 0 } }
    ```
 
 8. **Create findings.json** using `Write`:
@@ -487,9 +487,21 @@ state.json with new phase and timestamp.
 
 ### SUMMARY Phase
 
-- Spawn `context-builder` with task: "summary"
-- Output: `$WORKSPACE/summary.md`
-- Edit state.json → `group = "complete"`, `phase = "completion"`
+1. **Commit all implementation work** (orchestrator does this, not agent):
+   - Stage all implementation changes: `git add -A`
+   - Create atomic commit with descriptive message covering all features
+   - Example: `feat: implement webhook notifications with SSRF protection`
+
+2. **Generate summary**:
+   - Spawn `context-builder` with task: "summary"
+   - Output: `$WORKSPACE/summary.md`
+
+3. Edit state.json → `group = "complete"`, `phase = "completion"`
+
+**Commit timing rationale:** Waiting until after review/remediation ensures:
+- Clean git history (no WIP commits, no "fix review feedback" commits)
+- Atomic changes that can be reverted as a unit
+- Each commit represents reviewed, tested code
 
 ### COMPLETION Checkpoint
 

@@ -372,7 +372,31 @@ state.json with new phase and timestamp.
 
 **Entry:** `group = "design"` AND `phase = "triage"`
 
-Present comprehensive architecture context, then use `AskUserQuestion`:
+**Purpose:** Enable the user to make an informed decision about the architecture. Don't summarize—present the actual content.
+
+**Present architecture context by reading and showing:**
+
+1. **Key Decisions** (from `$WORKSPACE/architecture.md`)
+   - For each major decision: what was chosen, why, and what was given up
+   - Example: "**API Style:** REST over GraphQL. Rationale: team familiarity, simpler caching. Trade-off: clients make multiple requests for related data."
+
+2. **Security Findings & Mitigations** (from `$WORKSPACE/hardening-review.md`)
+   - List each finding with its specific mitigation, not just counts
+   - Example: "**SSRF via webhook URL** (High): Mitigated by blocking private IP ranges, requiring HTTPS, validating DNS resolution before request."
+   - If a finding is accepted as risk, explain why
+
+3. **Scope Decisions** (from `$WORKSPACE/triage.json`)
+   - What's in v1 and why it's essential
+   - What's deferred and why (complexity, risk, not blocking)
+   - Dependencies between features
+
+4. **Open Questions or Risks**
+   - Anything that might change the user's approval decision
+   - Unknowns that will be discovered during implementation
+
+**Format:** Use markdown with tables, headers, and clear structure. The user should be able to scan quickly but also dig into details.
+
+**Then ask for approval:**
 
 ```json
 {
@@ -383,7 +407,7 @@ Present comprehensive architecture context, then use `AskUserQuestion`:
       "multiSelect": false,
       "options": [
         { "label": "Approve", "description": "Proceed to implementation." },
-        { "label": "Iterate", "description": "Need design changes." },
+        { "label": "Iterate", "description": "Need design changes (describe what)." },
         { "label": "Cancel", "description": "Stop workflow entirely." }
       ]
     }
@@ -394,7 +418,7 @@ Present comprehensive architecture context, then use `AskUserQuestion`:
 **Handle response:**
 
 - **Approve**: Edit state.json → `approvals.triage = true`, `group = "execution"`, `phase = "implementation"`
-- **Iterate**: If `design_iteration < 2`, increment it, reset `phase = "architecture"`
+- **Iterate**: Ask what needs to change. If `design_iteration < 2`, increment it, incorporate feedback, reset `phase = "architecture"`
 - **Cancel**: Edit state.json → `status = "cancelled"`, `cancelled_at = <now>`
 
 ### EXECUTION Group
@@ -415,12 +439,45 @@ Present comprehensive architecture context, then use `AskUserQuestion`:
 
 **Entry:** `group = "execution"` AND `phase = "review-checkpoint"`
 
-Present findings, use `AskUserQuestion` for disposition of each.
+**Purpose:** Enable the user to make informed decisions about each finding. Don't summarize—present the actual issues.
 
-Route:
+**Present each finding from `$WORKSPACE/findings.json` with:**
+
+1. **What:** Specific description of the issue (not "potential XSS" but "user input in `renderComment()` at line 47 is interpolated into HTML without escaping")
+
+2. **Where:** File path and line number(s)
+
+3. **Severity:** With rationale (why is this High vs Medium?)
+
+4. **Impact:** What could happen if exploited/unfixed
+
+5. **Suggested Fix:** Concrete approach, not generic advice
+
+**Group findings by severity**, then ask for disposition:
+
+```json
+{
+  "questions": [
+    {
+      "question": "How should we handle these findings?",
+      "header": "Disposition",
+      "multiSelect": false,
+      "options": [
+        { "label": "Fix all", "description": "Remediate all findings before shipping." },
+        { "label": "Review individually", "description": "I'll decide on each finding." },
+        { "label": "Ship as-is", "description": "Accept current state (document why)." }
+      ]
+    }
+  ]
+}
+```
+
+**If "Review individually":** Present each finding with options: Fix now / Defer (with reason) / Accept risk (with justification)
+
+**Route:**
 
 - All clean/deferred: Edit → `phase = "summary"`
-- Items to fix: Edit → `phase = "remediation"`
+- Items to fix: Edit → `phase = "remediation"`, update findings.json with disposition
 
 ### REMEDIATION Phase (Max 2 Cycles)
 
